@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL | RENTARD Control Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;800&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0b3ea9;
+            --secondary: #ce1126;
+            --dark: #0f172a;
+            --glass: rgba(15, 23, 42, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .sentinel-bg {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            z-index: -1;
+        }
+
+        .sentinel-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        aside {
+            background: var(--glass);
+            border-right: 1px solid var(--border);
+            padding: 40px 24px;
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 64px;
+            color: var(--secondary);
+        }
+
+        .nav-item {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .nav-item.active {
+            background: rgba(206, 17, 38, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(206, 17, 38, 0.2);
+        }
+
+        /* Main Content */
+        main {
+            padding: 64px;
+            max-width: 1400px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 48px;
+        }
+
+        /* Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+
+        .metric-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 32px;
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        /* Table Style */
+        .glass-table {
+            width: 100%;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.pending {
+            background: rgba(234, 179, 8, 0.1);
+            color: #eab308;
+        }
+
+        .badge.verified {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sentinel-bg"></div>
+    <div class="sentinel-grid">
+        <aside>
+            <div class="logo">SENTINEL_ROOM</div>
+            <nav id="adminNav">
+                <div class="nav-item active" data-target="dashboard_view">Dashboard</div>
+                <div class="nav-item" data-target="dna_verification">DNA Verification</div>
+                <div class="nav-item" data-target="worm_ledger">WORM Ledger</div>
+                <div class="nav-item" data-target="system_entropy">System Entropy</div>
+                <div class="nav-item" data-target="incident_pulse"
+                    style="color:#f43f5e; border-left:2px solid #f43f5e;">Incident Pulse</div>
+            </nav>
+        </aside>
+
+        <main>
+            <div class="header-row">
+                <h1>SISTEMA SUPREMO X1000</h1>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">STATUS: <span
+                        style="color: #22c55e">OPTIMAL</span></div>
+            </div>
+
+            <div id="dashboard_view">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="m_volume">$0</div>
+                        <div class="metric-label">Escrow DOP</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="m_volume_usd">$0</div>
+                        <div class="metric-label">Escrow USD</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="m_volume_btc">0</div>
+                        <div class="metric-label">Escrow BTC</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.9%</div>
+                        <div class="metric-label">Global Sync</div>
+                    </div>
+                </div>
+
+                <div class="glass-table" id="system_entropy" style="margin-bottom: 32px;">
+                    <h3 style="margin-bottom: 16px;">LIVE ENTROPY MAP | RD SYNC</h3>
+                    <div style="position:relative;">
+                        <canvas id="entropyMap"
+                            style="width: 100%; height: 350px; background: rgba(0,0,0,0.2); border-radius: 20px;"></canvas>
+                        <div id="oracle-hud"
+                            style="position:absolute; top:20px; right:20px; background:rgba(11, 62, 169, 0.8); padding:16px; border-radius:12px; border:1px solid var(--border); backdrop-filter:blur(5px); font-size:0.75rem; min-width:200px;">
+                            <h4 style="color:#fff; margin-bottom:8px;">ORACLE TRENDS</h4>
+                            <div id="trends-list">Cargando inteligencia...</div>
+                        </div>
+                        <div id="incident-alert"
+                            style="display:none; position:absolute; bottom:20px; left:20px; background:rgba(244, 63, 94, 0.9); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); backdrop-filter:blur(5px); font-size:0.75rem; color:#fff; animation: pulse-red 2s infinite;">
+                            <h4 style="margin-bottom:4px;">⚠️ ALERTA: ANOMALÍA SENTINEL</h4>
+                            <p id="alert-text">Calculando riesgo...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-table" id="worm_ledger">
+                <h3 style="margin-bottom: 24px;">RECIENTES AUDIT LOGS (WORM)</h3>
+                <div id="logs_container">
+                    <p style="color:var(--text-muted)">Conectando con el Ledger...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Entropy Map Visualization: Multi-Region DNA
+        const canvas = document.getElementById('entropyMap');
+        const ctx = canvas.getContext('2d');
+        let points = [];
+        let logisticsNodes = [];
+
+        const regionNodes = [
+            { name: 'SDQ', x: 0.5, y: 0.7, color: '#ce1126' }, // Santo Domingo
+            { name: 'STI', x: 0.3, y: 0.3, color: '#0b3ea9' }, // Santiago
+            { name: 'PUJ', x: 0.8, y: 0.5, color: '#22c55e' }  // Punta Cana
+        ];
+
+        function initMap() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            // Background Entropy
+            for (let i = 0; i < 20; i++) {
+                points.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 2 + 1,
+                    p: Math.random() * Math.PI * 2
+                });
+            }
+
+            // Logistics Pulse Nodes
+            for (let i = 0; i < 8; i++) {
+                logisticsNodes.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    speed: Math.random() * 0.5 + 0.2,
+                    p: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let flashToggle = false;
+
+        function drawMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Regional Oversoul Clusters
+            regionNodes.forEach(node => {
+                const nx = canvas.width * node.x;
+                const ny = canvas.height * node.y;
+
+                const grad = ctx.createRadialGradient(nx, ny, 0, nx, ny, 150);
+                grad.addColorStop(0, `${node.color}33`);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(nx, ny, 150, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = node.color;
+                ctx.font = '800 10px Outfit';
+                ctx.fillText(node.name, nx - 10, ny - 20);
+                ctx.beginPath();
+                ctx.arc(nx, ny, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Incident Anomaly (Flashing Red)
+            if (flashToggle) {
+                const ax = canvas.width * 0.7;
+                const ay = canvas.height * 0.6;
+                ctx.beginPath();
+                ctx.arc(ax, ay, 20, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.3)';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(ax, ay, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#f43f5e';
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.fillText('ANOMALÍA DETECTADA', ax - 50, ay - 25);
+            }
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 0.5;
+
+            points.forEach((pt, i) => {
+                pt.p += 0.01;
+                const pulse = Math.sin(pt.p) * 2;
+
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, pt.r + pulse, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.2)';
+                ctx.fill();
+            });
+
+            // Logistics DNA Pulse (Moving dots)
+            logisticsNodes.forEach(ln => {
+                ln.p += 0.02;
+                const pulse = Math.sin(ln.p) * 4 + 4;
+
+                ctx.beginPath();
+                ctx.arc(ln.x, ln.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(ln.x, ln.y, pulse, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.stroke();
+            });
+
+            if (Math.random() > 0.98) flashToggle = !flashToggle;
+            requestAnimationFrame(drawMap);
+        }
+
+        async function fetchIncidentPulse() {
+            try {
+                const res = await fetch(`${API_BASE}/incidents/predict/asset-id-sim`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const alertBox = document.getElementById('incident-alert');
+                if (data.prediction.status === 'CRITICAL_ANOMALY' || true) {
+                    alertBox.style.display = 'block';
+                    document.getElementById('alert-text').innerText = `${data.prediction.prediction} (Riesgo: ${data.prediction.riskScore}%)`;
+                }
+            } catch (err) { console.error('Pulse Sync Error'); }
+        }
+
+        initMap();
+        drawMap();
+
+        const API_BASE = 'http://localhost:3000/api';
+        const token = localStorage.getItem('rentard_token');
+
+        async function fetchTrends() {
+            try {
+                const res = await fetch(`${API_BASE}/oracle/trends`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const list = document.getElementById('trends-list');
+                list.innerHTML = data.map(t => `
+                    <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                        <div>
+                            <strong>${t.region}</strong><br/>
+                            <span style="color:var(--text-muted); font-size:0.65rem;">${t.insight}</span>
+                        </div>
+                        <span style="color:${t.trend === 'UP' ? '#22c55e' : '#fff'}; font-weight:800;">${t.volume}</span>
+                    </div>
+                `).join('');
+            } catch (err) { console.error('Oracle Sync Error'); }
+        }
+
+        async function fetchMetrics() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/metrics`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                // Real-Time Currency Synthesis (Frontend Simulation)
+                const USD_RATE = 58.5;
+                const BTC_RATE = 5670000;
+
+                document.getElementById('m_volume').innerText = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', maximumFractionDigits: 0 }).format(data.volume);
+                document.getElementById('m_volume_usd').innerText = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.volume / USD_RATE);
+                document.getElementById('m_volume_btc').innerText = (data.volume / BTC_RATE).toFixed(6);
+
+                // document.getElementById('m_users').innerText = data.users; // No longer in first 4 cards
+                // document.getElementById('m_cars').innerText = data.cars;   // No longer in first 4 cards
+            } catch (err) { console.error(err); }
+        }
+
+        async function fetchLogs() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/audit-logs`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const container = document.getElementById('logs_container');
+                container.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Acción</th>
+                                <th>Contexto</th>
+                                <th>ID Sentinel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(log => `
+                                <tr>
+                                    <td>${new Date(log.timestamp).toLocaleString()}</td>
+                                    <td><span class="badge pending">${log.action}</span></td>
+                                    <td>${log.context}</td>
+                                    <td>${log.userId || 'System'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (err) { console.error(err); }
+        }
+
+        if (token) {
+            fetchMetrics();
+            fetchLogs();
+            fetchTrends();
+            fetchIncidentPulse();
+            setInterval(fetchMetrics, 5000);
+            setInterval(fetchTrends, 10000);
+            setInterval(fetchIncidentPulse, 5000);
+
+            // --- Sidebar Navigation Logic ---
+            document.querySelectorAll('#adminNav .nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    // Update Active Class
+                    document.querySelectorAll('#adminNav .nav-item').forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const target = item.getAttribute('data-target');
+                    const element = document.getElementById(target);
+
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        alert(`Módulo [${target}] en fase de sincronización neural (Próximamente).`);
+                    }
+                });
+            });
+        } else {
+            alert('Sentinel Access Denied: Returning to Central.');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es-DO">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RENTARD | Renta de Vehículos entre Personas en RD (Cualquier Año)</title>
+  <meta name="description"
+    content="RENTARD: renta y publica vehículos en República Dominicana. Aceptamos cualquier año: manda la seguridad, verificación y reglas claras." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="top-stripe" aria-hidden="true"></div>
+
+  <header>
+    <div class="wrap">
+      <div class="nav">
+        <a class="brand" href="#inicio">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>RENTARD</h1>
+            <p>Renta P2P • República Dominicana • Supremacía x1000</p>
+          </div>
+        </a>
+
+        <nav aria-label="Navegación principal">
+          <ul>
+            <li><a href="#como">Cómo funciona</a></li>
+            <li><a href="#vehiculos">Directorio de Vehículos</a></li>
+            <li><a href="#publicar">Publicar Vehículo</a></li>
+            <li><a href="#seguridad">Seguridad</a></li>
+          </ul>
+        </nav>
+
+        <div class="actions">
+          <button class="btn menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="mobileMenu">☰
+            Menú</button>
+          <button class="btn" id="openPublishTop" type="button">Login / Publicar</button>
+          <a class="btn primary" href="#vehiculos">Buscar Vehículo</a>
+        </div>
+      </div>
+
+      <div id="mobileMenu" class="card" style="display:none; padding:10px; border-radius:16px; margin-bottom:14px;">
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <a class="btn" style="box-shadow:none" href="#como">Cómo funciona</a>
+          <a class="btn" style="box-shadow:none" href="#vehiculos">Vehículos</a>
+          <a class="btn" style="box-shadow:none" href="#publicar">Publicar</a>
+          <a class="btn" style="box-shadow:none" href="#seguridad">Seguridad</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="inicio">
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="card hero-left">
+          <div class="kicker">
+            <span class="pill"><span class="dot" aria-hidden="true"></span> Aceptamos cualquier año</span>
+            <span class="pill">Verificación + checklist</span>
+            <span class="pill">Depósito + evidencia</span>
+          </div>
+
+          <h2 class="title">Renta vehículos en RD, <br />directo con el dueño sin importar el año.</h2>
+
+          <p class="subtitle">
+            Un marketplace universal donde cualquiera publica su carro, jeepeta, bote o helicóptero y lo renta por día.
+            El año no manda: manda que esté <b>seguro</b>, <b>verificado</b> y con reglas claras.
+          </p>
+
+          <div class="hero-cta">
+            <a class="btn primary" href="#vehiculos">Explorar Catálogo Universal</a>
+            <button class="btn" id="openPublishHero" type="button">Sintetizar Activo (Publicar)</button>
+          </div>
+
+          <div class="search" aria-label="Buscador y filtros">
+            <!-- Universal Taxonomy Domain Selector -->
+            <div class="domain-selector">
+              <button class="domain-btn active" id="domain-land">Terrestre</button>
+              <button class="domain-btn" id="domain-water">Acuático</button>
+              <button class="domain-btn" id="domain-air">Aéreo</button>
+            </div>
+
+            <div class="search-row">
+              <div class="input" role="search">
+                <span aria-hidden="true">🔎</span>
+                <input id="q" placeholder="Marca/modelo o tipo (e.g. Toyota, Bote...)" autocomplete="off" />
+              </div>
+
+              <select class="select" id="loc" title="Ubicación">
+                <option value="">Ubicación (toda RD)</option>
+                <option>Azua</option>
+                <option>Bahoruco</option>
+                <option>Barahona</option>
+                <option>Dajabón</option>
+                <option>Distrito Nacional</option>
+                <option>Duarte</option>
+                <option>El Seibo</option>
+                <option>Elías Piña</option>
+                <option>Espaillat</option>
+                <option>Hato Mayor</option>
+                <option>Hermanas Mirabal</option>
+                <option>Independencia</option>
+                <option>La Altagracia</option>
+                <option>La Romana</option>
+                <option>La Vega</option>
+                <option>María Trinidad Sánchez</option>
+                <option>Monseñor Nouel</option>
+                <option>Monte Cristi</option>
+                <option>Monte Plata</option>
+                <option>Pedernales</option>
+                <option>Peravia</option>
+                <option>Puerto Plata</option>
+                <option>Samaná</option>
+                <option>San Cristóbal</option>
+                <option>San José de Ocoa</option>
+                <option>San Juan</option>
+                <option>San Pedro de Macorís</option>
+                <option>Sánchez Ramírez</option>
+                <option>Santiago</option>
+                <option>Santiago Rodríguez</option>
+                <option>Valverde</option>
+              </select>
+
+              <select class="select" id="type" title="Tipo">
+                <option value="">Categoría (todas)</option>
+                <option>Sedan</option>
+                <option>Jeepeta / SUV</option>
+                <option>Pickup</option>
+                <option>Bote</option>
+                <option>Helicóptero</option>
+              </select>
+
+              <button class="btn" id="go" type="button">Buscar Resultantes</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card hero-right">
+          <div class="poster">
+            <div class="badge">
+              <span class="flag-mini" aria-hidden="true"></span>
+              <p><strong>Confianza al volante</strong><br />Identidad verificada • Entrega con fotos</p>
+            </div>
+
+            <div class="stat-grid" aria-label="Indicadores">
+              <div class="stat" role="button" onclick="openFeature('limited')" style="cursor:pointer"><b>Sin
+                  límite</b><span>Año del vehículo</span></div>
+              <div class="stat" role="button" onclick="openFeature('verification')" style="cursor:pointer">
+                <b>Verificación</b><span>Docs + fotos + checklist</span>
+              </div>
+              <div class="stat" role="button" onclick="openFeature('escrow')" style="cursor:pointer">
+                <b>Escrow</b><span>Daños / multas protegidas</span>
+              </div>
+              <div class="stat" role="button" onclick="openFeature('neural')" style="cursor:pointer">
+                <b>Neural</b><span>Estrellas y comentarios</span>
+              </div>
+            </div>
+
+            <div class="pill" style="justify-content:center;">
+              Transparente: sin “sorpresas” ni cuentos raros.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="como">
+      <div class="section-head">
+        <div>
+          <h2>Protocolo RENTARD Ley 146-11</h2>
+          <p>Operación legal y segura a nivel de firmware.</p>
+        </div>
+        <span class="pill"><span class="dot" aria-hidden="true"></span> P2P con reglas claras</span>
+      </div>
+
+      <div class="grid">
+        <article class="tile">
+          <div class="icon" aria-hidden="true">🧾</div>
+          <h3>1) Verificación KYC</h3>
+          <p>Dueño y conductor verifican identidad. El vehículo sube fotos, docs y checklist de seguridad.</p>
+        </article>
+
+        <article class="tile">
+          <div class="icon" aria-hidden="true">📅</div>
+          <h3>2) Reserva Contratada</h3>
+          <p>El cliente elige fechas, acepta la Ley y deposita en custodia Smart Escrow.</p>
+        </article>
+
+        <article class="tile">
+          <div class="icon" aria-hidden="true">📸</div>
+          <h3>3) Evidencia Irrefutable</h3>
+          <p>Fotos de entrega/recibo guardadas con hashing inviolable SHA-256.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Recomendaciones Neurales -->
+    <section class="section" id="recommendations" style="display:none;">
+      <div class="section-head">
+        <div>
+          <h2>Recomendaciones Neurales</h2>
+          <p>Activos recomendados para ti basados en tu Social DNA.</p>
+        </div>
+      </div>
+      <div class="listings" id="recommendedListings"></div>
+    </section>
+
+    <section class="section" id="vehiculos">
+      <div class="section-head">
+        <div>
+          <h2>Vehículos disponibles</h2>
+          <p>Filtra y abre el Mapping para reservar o iniciar chat neuronal.</p>
+        </div>
+      </div>
+
+      <div class="listings" id="listings"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot">
+        <div>© <span id="year"></span> RENTARD — Marketplace Universal de Vehículos (Cualquier Año).</div>
+        <div class="links">
+          <a href="#como">Protocolo</a>
+          <a href="#vehiculos">Catálogo</a>
+          <a href="#inicio">Inicio</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast" aria-live="polite"></div>
+
+  <!-- MODAL: DETALLES / RESERVA / CHAT -->
+  <div class="modal-backdrop" id="detailsBackdrop" style="display:none;">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="detailsTitle">Mapping del Vehículo</h3>
+        <button class="btn" id="closeDetails" type="button">✕ Cerrar</button>
+      </div>
+      <div class="modal-body" id="detailsContent">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PUBLICAR / LOGIN -->
+  <div class="modal-backdrop" id="publishBackdrop" style="display:none;">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-head">
+        <h3 id="publishTitle">Sintetizar Activo Universitario</h3>
+        <button class="btn" id="closePublish" type="button">✕ Cerrar</button>
+      </div>
+      <div class="modal-body" id="publishFormContent">
+        <!-- Form inject happens via main.JS -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/main.js"></script>
+</body>
+
+</html>

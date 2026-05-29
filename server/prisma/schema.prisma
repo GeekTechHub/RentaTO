@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String       @id @default(uuid())
+  email      String       @unique
+  password   String
+  name       String
+  role       String       @default("RENTER") // ADMIN, OWNER, RENTER
+  kycStatus  String       @default("PENDING") // PENDING, VERIFIED, REJECTED
+  trustScore Float        @default(50) // Social DNA Trust Level (0-100)
+  cars       Car[]
+  bookings   Booking[]
+  sentMessages Message[]  @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  createdAt  DateTime     @default(now())
+}
+
+model Car {
+  id           String    @id @default(uuid())
+  brand        String
+  model        String
+  year         Int
+  type         String    // Still used for legacy/base categorization
+  domain       String    @default("LAND")     // LAND, WATER, AIR
+  category     String    @default("SEDAN")    // SUV, JETSKI, HELICOPTER, etc.
+  energyType   String    @default("GASOLINE") // GASOLINE, DIESEL, ELECTRIC, etc.
+  capacity     Int       @default(4)
+  location     String
+  price        Float
+  deposit      Float
+  rating       Float     @default(0)
+  trips        Int       @default(0)
+  verified     Boolean   @default(false)
+  dnaStatus    String    @default("PENDING")  // PENDING, MAPPED, VERIFIED
+  note         String?
+  image        String?
+  ownerId      String
+  owner        User      @relation(fields: [ownerId], references: [id])
+  bookings     Booking[]
+  
+  requiresOperatorLevel String? // License, Captain, Pilot, Certification
+  safetyProfile        String? // land_standard, water_standard, air_standard, micromobility
+  transmission         String?   @default("AUTOMATIC")
+  licensePlate         String?
+  chassisNumber        String?
+  fuelRange            Int?      @default(500)
+
+  createdAt    DateTime  @default(now())
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  startDate     DateTime
+  endDate       DateTime
+  totalPrice    Float
+  depositStatus String   @default("HELD") // HELD, RELEASED, CLAIMED
+  status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  renterId      String
+  renter        User     @relation(fields: [renterId], references: [id])
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id])
+  messages      Message[]
+  contract      Contract?
+  createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  context   String?  // JSON stringified context
+  userId    String?
+  timestamp DateTime @default(now())
+}
+
+model Dispute {
+  id        String   @id @default(uuid())
+  bookingId String
+  reason    String
+  status    String   @default("OPEN") // OPEN, RESOLVED, ESCALATED
+  evidence  String?  // URL to evidence
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Contract {
+  id            String   @id @default(uuid())
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  bookingId     String   @unique
+  content       String   // The forged juridical text
+  signedAt      DateTime?
+  signatureHash String?  // Neural signature trace
+  createdAt     DateTime @default(now())
+}
