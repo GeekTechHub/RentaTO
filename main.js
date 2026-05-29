@@ -197,7 +197,7 @@ window.openDetails = (id) => {
                     <br/>
                     <b>Condiciones Reportadas:</b> ${car.note || 'Sin reportes irregulares.'}
                 </div>
-                <div class="small" style="margin-top:15px; color: var(--warn)">Recordatorio: Todo contrato se ampara bajo la Ley 146-11 y los Anexos especificados en el Juridical Engine.</div>
+                <div class="small" style="margin-top:15px; color: var(--warn)">Recordatorio: Todo contrato se ampara bajo las Leyes 126-02 (Firmas Digitales), 63-17 (Tránsito), 146-02 (Seguros), y regulaciones sectoriales (IDAC/Armada).</div>
             </div>
             
             <div class="panel">
