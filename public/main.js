@@ -1,6 +1,6 @@
 // RENTARD | Supremacía x1000 - Universal Taxonomy (Land, Water, Air)
 const $ = (id) => document.getElementById(id);
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = window.RENTARD_API_BASE || '/api';
 
 let cars = [];
 let currentUser = JSON.parse(localStorage.getItem('rentard_user')) || null;
