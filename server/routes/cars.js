@@ -1,83 +1,179 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { asyncHandler } = require('../middleware/errorHandler');
+const { z } = require('zod');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-// --- GET /api/cars ---
-router.get('/', async (req, res) => {
+// --- Schemas ---
+const DOMAIN_ENERGY = {
+    AIR: ['JET_FUEL', 'AVGAS', 'ELECTRIC'],
+    WATER: ['GASOLINE', 'DIESEL', 'ELECTRIC', 'HUMAN'],
+    LAND: ['GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID', 'HUMAN']
+};
+
+const createCarSchema = z.object({
+    brand: z.string().min(1, 'Marca requerida').max(50).trim(),
+    model: z.string().min(1, 'Modelo requerido').max(60).trim(),
+    year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1),
+    type: z.string().min(1).max(40).trim(),
+    location: z.string().min(2).max(80).trim(),
+    price: z.coerce.number().positive('El precio debe ser mayor a 0'),
+    deposit: z.coerce.number().nonnegative('Depósito no puede ser negativo'),
+    note: z.string().max(500).optional(),
+    image: z.string().url('image debe ser URL válida').optional().or(z.literal('')),
+    domain: z.enum(['LAND', 'WATER', 'AIR']).default('LAND'),
+    energyType: z.string().default('GASOLINE'),
+    category: z.string().default('SEDAN'),
+    capacity: z.coerce.number().int().positive().default(4),
+    requiresOperatorLevel: z.string().default('STANDARD_LICENSE'),
+    safetyProfile: z.string().optional(),
+    transmission: z.enum(['AUTOMATIC', 'MANUAL']).default('AUTOMATIC'),
+    licensePlate: z.string().max(20).optional(),
+    chassisNumber: z.string().max(50).optional(),
+    fuelRange: z.coerce.number().int().nonnegative().default(500)
+}).refine(d => DOMAIN_ENERGY[d.domain].includes(d.energyType), {
+    message: 'Tipo de energía no compatible con el dominio',
+    path: ['energyType']
+});
+
+// ============================================
+// GET /api/cars  (Public catalog with filters)
+// ============================================
+router.get('/', asyncHandler(async (req, res) => {
     const { q, loc, type, domain, energyType, category } = req.query;
-    try {
-        const cars = await prisma.car.findMany({
-            where: {
-                AND: [
-                    q ? { OR: [{ brand: { contains: q } }, { model: { contains: q } }] } : {},
-                    loc ? { location: { contains: loc } } : {},
-                    type ? { type: type } : {},
-                    domain ? { domain: domain } : {},
-                    energyType ? { energyType: energyType } : {},
-                    category ? { category: category } : {}
-                ]
-            },
-            include: { owner: { select: { name: true, kycStatus: true } } }
-        });
-        res.json(cars);
-    } catch (err) {
-        res.status(500).json({ error: 'Search Engine Retrieval Error' });
-    }
-});
+    const cars = await prisma.car.findMany({
+        where: {
+            AND: [
+                q ? { OR: [
+                    { brand: { contains: q, mode: 'insensitive' } },
+                    { model: { contains: q, mode: 'insensitive' } }
+                ] } : {},
+                loc ? { location: { contains: loc, mode: 'insensitive' } } : {},
+                type ? { type } : {},
+                domain ? { domain } : {},
+                energyType ? { energyType } : {},
+                category ? { category } : {}
+            ]
+        },
+        include: { owner: { select: { name: true, kycStatus: true, trustScore: true } } },
+        orderBy: { createdAt: 'desc' }
+    });
+    res.json(cars);
+}));
 
-// --- POST /api/cars (Protected) ---
-router.post('/', auth, async (req, res) => {
-    const {
-        brand, model, year, type, location, price, deposit, note, image,
-        domain, energyType, category, capacity, requiresOperatorLevel, safetyProfile,
-        transmission, licensePlate, chassisNumber, fuelRange
-    } = req.body;
+// ============================================
+// GET /api/cars/mine  (Cars owned by current user) — MUST be before /:id
+// ============================================
+router.get('/mine', auth, asyncHandler(async (req, res) => {
+    const cars = await prisma.car.findMany({
+        where: { ownerId: req.user.id },
+        include: {
+            _count: { select: { bookings: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+    res.json(cars);
+}));
 
-    try {
-        // Validation Logic: Status ZZ Universal Rules
-        if (domain === 'AIR' && !['JET_FUEL', 'AVGAS', 'ELECTRIC'].includes(energyType)) {
-            return res.status(400).json({ error: 'DNA Mismatch: Invalid Propulsion for AIR domain' });
-        }
-
-        if (domain === 'WATER' && !['GASOLINE', 'DIESEL', 'ELECTRIC', 'HUMAN'].includes(energyType)) {
-            return res.status(400).json({ error: 'DNA Mismatch: Invalid Propulsion for WATER domain' });
-        }
-
-        const car = await prisma.car.create({
-            data: {
-                brand, model, year: parseInt(year), type, location,
-                price: parseFloat(price), deposit: parseFloat(deposit),
-                note, image, ownerId: req.user.id,
-                domain: domain || 'LAND',
-                energyType: energyType || 'GASOLINE',
-                category: category || 'SEDAN',
-                capacity: parseInt(capacity) || 4,
-                requiresOperatorLevel,
-                safetyProfile: safetyProfile || `${(domain || 'LAND').toLowerCase()}_standard`,
-                transmission: transmission || 'AUTOMATIC',
-                licensePlate,
-                chassisNumber,
-                fuelRange: fuelRange ? parseInt(fuelRange) : 500
-            }
-        });
-        res.json({ message: 'Universal Asset Mapped to DNA', carId: car.id });
-    } catch (err) {
-        res.status(400).json({ error: 'Mapping Error: Invalid Data Synthesis' });
-    }
-});
-
-// --- GET /api/cars/recommendations (Protected) ---
-router.get('/recommendations', auth, async (req, res) => {
+// ============================================
+// GET /api/cars/recommendations  (Protected) — MUST be before /:id
+// ============================================
+router.get('/recommendations', auth, asyncHandler(async (req, res) => {
+    let recommendations = [];
     try {
         const RecommendationEngine = require('../engines/RecommendationEngine');
-        const recommendations = await RecommendationEngine.recommend(req.user.id);
-        res.json(recommendations);
+        recommendations = await RecommendationEngine.recommend(req.user.id);
     } catch (err) {
-        res.status(500).json({ error: 'Recommendation Neural Sync Failed' });
+        // Fallback: most recent verified cars
+        recommendations = await prisma.car.findMany({
+            where: { verified: true },
+            include: { owner: { select: { name: true, trustScore: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 3
+        });
     }
-});
+    res.json(recommendations);
+}));
+
+// ============================================
+// GET /api/cars/:id  (Single car details)
+// ============================================
+router.get('/:id', asyncHandler(async (req, res) => {
+    const car = await prisma.car.findUnique({
+        where: { id: req.params.id },
+        include: {
+            owner: { select: { id: true, name: true, kycStatus: true, trustScore: true } }
+        }
+    });
+    if (!car) return res.status(404).json({ error: 'Vehículo no encontrado' });
+    res.json(car);
+}));
+
+// ============================================
+// POST /api/cars  (Create a vehicle listing)
+// ============================================
+router.post('/', auth, validate(createCarSchema), asyncHandler(async (req, res) => {
+    const data = req.body;
+    data.safetyProfile = data.safetyProfile || `${data.domain.toLowerCase()}_standard`;
+
+    const car = await prisma.car.create({
+        data: {
+            ...data,
+            ownerId: req.user.id,
+            image: data.image || null
+        }
+    });
+
+    res.status(201).json({
+        message: 'Vehículo publicado en el catálogo.',
+        car
+    });
+}));
+
+// ============================================
+// PUT /api/cars/:id  (Update — owner only)
+// ============================================
+router.put('/:id', auth, validate(createCarSchema.partial()), asyncHandler(async (req, res) => {
+    const car = await prisma.car.findUnique({ where: { id: req.params.id } });
+    if (!car) return res.status(404).json({ error: 'Vehículo no encontrado' });
+    if (car.ownerId !== req.user.id) {
+        return res.status(403).json({ error: 'Solo el dueño puede editar este vehículo' });
+    }
+
+    const updated = await prisma.car.update({
+        where: { id: req.params.id },
+        data: req.body
+    });
+    res.json({ message: 'Vehículo actualizado.', car: updated });
+}));
+
+// ============================================
+// DELETE /api/cars/:id  (Delete — owner only)
+// ============================================
+router.delete('/:id', auth, asyncHandler(async (req, res) => {
+    const car = await prisma.car.findUnique({ where: { id: req.params.id } });
+    if (!car) return res.status(404).json({ error: 'Vehículo no encontrado' });
+    if (car.ownerId !== req.user.id) {
+        return res.status(403).json({ error: 'Solo el dueño puede eliminar este vehículo' });
+    }
+
+    // Block deletion if there are active bookings
+    const activeBookings = await prisma.booking.count({
+        where: { carId: req.params.id, status: { in: ['PENDING', 'CONFIRMED'] } }
+    });
+    if (activeBookings > 0) {
+        return res.status(409).json({
+            error: 'No se puede eliminar un vehículo con reservas activas',
+            activeBookings
+        });
+    }
+
+    await prisma.car.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Vehículo eliminado.' });
+}));
 
 module.exports = router;

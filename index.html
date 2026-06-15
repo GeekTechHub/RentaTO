@@ -39,6 +39,7 @@
         <div class="actions">
           <button class="btn menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="mobileMenu">☰
             Menú</button>
+          <button class="btn" id="myAccountBtn" type="button" style="display:none;">Mi Cuenta</button>
           <button class="btn" id="openPublishTop" type="button">Login / Publicar</button>
           <a class="btn primary" href="#vehiculos">Buscar Vehículo</a>
         </div>
@@ -263,7 +264,26 @@
     </div>
   </div>
 
+  <!-- My Account Modal -->
+  <div class="modal-backdrop" id="accountBackdrop" style="display:none;">
+    <div class="modal" style="max-width: 900px;">
+      <div class="modal-head">
+        <h3>Mi Cuenta</h3>
+        <button class="btn" id="closeAccount" type="button">✕ Cerrar</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">
+          <button class="btn primary tab-btn" data-tab="bookings" type="button" onclick="switchAccountTab('bookings')">Mis Reservas</button>
+          <button class="btn tab-btn" data-tab="cars" type="button" onclick="switchAccountTab('cars')">Mis Vehículos</button>
+          <button class="btn tab-btn" data-tab="owner-bookings" type="button" onclick="switchAccountTab('owner-bookings')">Reservas Recibidas</button>
+        </div>
+        <div id="accountContent" style="margin-top: 20px; max-height: 60vh; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="/main.js"></script>
+  <script src="/account.js"></script>
 </body>
 
 </html>
