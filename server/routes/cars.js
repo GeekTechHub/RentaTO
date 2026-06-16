@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const requireAdmin = require('../middleware/requireAdmin');
 const validate = require('../middleware/validate');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { z } = require('zod');
@@ -55,7 +56,10 @@ const updateCarSchema = carBaseSchema.partial().refine(energyMatchesDomain, {
 // GET /api/cars  (Public catalog with filters)
 // ============================================
 router.get('/', asyncHandler(async (req, res) => {
-    const { q, loc, type, domain, energyType, category } = req.query;
+    const { q, loc, type, domain, energyType, category, minPrice, maxPrice, minCapacity } = req.query;
+    const priceFilter = {};
+    if (minPrice) priceFilter.gte = parseFloat(minPrice);
+    if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
     const cars = await prisma.car.findMany({
         where: {
             verified: true, // Only approved cars are public
@@ -68,7 +72,9 @@ router.get('/', asyncHandler(async (req, res) => {
                 type ? { type } : {},
                 domain ? { domain } : {},
                 energyType ? { energyType } : {},
-                category ? { category } : {}
+                category ? { category } : {},
+                Object.keys(priceFilter).length ? { price: priceFilter } : {},
+                minCapacity ? { capacity: { gte: parseInt(minCapacity, 10) } } : {}
             ]
         },
         include: { owner: { select: { name: true, kycStatus: true, trustScore: true } } },
@@ -114,7 +120,7 @@ router.get('/recommendations', auth, asyncHandler(async (req, res) => {
 // ============================================
 // GET /api/cars/admin/pending  (Admin — cars awaiting approval) — before /:id
 // ============================================
-router.get('/admin/pending', auth, asyncHandler(async (req, res) => {
+router.get('/admin/pending', auth, requireAdmin, asyncHandler(async (req, res) => {
     const cars = await prisma.car.findMany({
         where: { verified: false },
         include: { owner: { select: { name: true, email: true } } },
@@ -171,7 +177,7 @@ router.post('/', auth, validate(createCarSchema), asyncHandler(async (req, res) 
 // ============================================
 // POST /api/cars/:id/approve  (Admin)
 // ============================================
-router.post('/:id/approve', auth, asyncHandler(async (req, res) => {
+router.post('/:id/approve', auth, requireAdmin, asyncHandler(async (req, res) => {
     const car = await prisma.car.update({
         where: { id: req.params.id },
         data: { verified: true, dnaStatus: 'VERIFIED' }
@@ -189,7 +195,7 @@ router.post('/:id/approve', auth, asyncHandler(async (req, res) => {
 // ============================================
 // POST /api/cars/:id/reject  (Admin)
 // ============================================
-router.post('/:id/reject', auth, asyncHandler(async (req, res) => {
+router.post('/:id/reject', auth, requireAdmin, asyncHandler(async (req, res) => {
     const car = await prisma.car.update({
         where: { id: req.params.id },
         data: { verified: false, dnaStatus: 'REJECTED' }
@@ -214,11 +220,36 @@ router.put('/:id', auth, validate(updateCarSchema), asyncHandler(async (req, res
         return res.status(403).json({ error: 'Solo el dueño puede editar este vehículo' });
     }
 
+    // If meaningful fields change, the vehicle goes back to the moderation queue.
+    // (Admins editing their own car can stay verified.)
+    const MEANINGFUL = ['brand', 'model', 'year', 'price', 'deposit', 'location',
+        'note', 'image', 'domain', 'category', 'capacity', 'licensePlate', 'chassisNumber'];
+    const changed = MEANINGFUL.some(k => k in req.body && req.body[k] !== car[k]);
+    const data = { ...req.body };
+    if (changed && req.user.role !== 'ADMIN') {
+        data.verified = false;
+        data.dnaStatus = 'PENDING';
+    }
+
     const updated = await prisma.car.update({
         where: { id: req.params.id },
-        data: req.body
+        data
     });
-    res.json({ message: 'Vehículo actualizado.', car: updated });
+
+    await prisma.auditLog.create({
+        data: {
+            action: 'CAR_UPDATED',
+            context: JSON.stringify({ carId: car.id, changed, requeued: changed && req.user.role !== 'ADMIN' }),
+            userId: req.user.id
+        }
+    });
+
+    res.json({
+        message: changed && req.user.role !== 'ADMIN'
+            ? 'Vehículo actualizado. Volverá al catálogo público cuando un administrador lo apruebe.'
+            : 'Vehículo actualizado.',
+        car: updated
+    });
 }));
 
 // ============================================

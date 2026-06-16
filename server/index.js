@@ -6,7 +6,6 @@ const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
-const FractalSeed = require('./engines/FractalSeed');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -56,9 +55,6 @@ const generalLimiter = rateLimit({
 app.use('/api/', generalLimiter);
 app.use('/api/auth', authLimiter);
 
-// --- Fractal Initialization ---
-const seedResult = FractalSeed.initialize();
-
 // --- Static (only useful in monolith mode) ---
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -82,10 +78,8 @@ app.use('/api/singularity', require('./routes/singularity'));
 // --- Health Check ---
 app.get('/api/health', (req, res) => {
     res.json({
-        status: 'UNIVERSAL_SINGULARITY_ACTIVE',
-        density: 'MAX',
-        apotheosis: 'STATUS_ZZ',
-        seed: seedResult,
+        status: 'ok',
+        service: 'rentato-api',
         env: NODE_ENV,
         timestamp: new Date().toISOString()
     });
@@ -100,14 +94,13 @@ app.use('/api/*', (req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-    console.log(`[RENTARD] Juridical Engine Online: Port ${PORT} (${NODE_ENV})`);
-    console.log(`[RENTARD] Status: APOTEOSIS TOTAL | Level: STATUS_ZZ (Singularity Achieved)`);
-    console.log(`[RENTARD] CORS whitelist: ${ALLOWED_ORIGINS.join(', ')}`);
+    console.log(`[rentato] API listening on port ${PORT} (${NODE_ENV})`);
+    console.log(`[rentato] CORS whitelist: ${ALLOWED_ORIGINS.join(', ')}`);
 });
 
 // --- Graceful shutdown ---
 process.on('SIGTERM', async () => {
-    console.log('[RENTARD] SIGTERM received, closing gracefully...');
+    console.log('[rentato] SIGTERM received, closing gracefully...');
     await prisma.$disconnect();
     process.exit(0);
 });

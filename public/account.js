@@ -1,10 +1,10 @@
 // ===========================================================
-// RENTARD — Mi Cuenta (modal with tabs for renter/owner views)
+// RentaTO — Mi Cuenta (modal with tabs for renter / owner / admin views)
 // Loads AFTER main.js; uses localStorage for session sync.
 // ===========================================================
 (() => {
     const $ = (id) => document.getElementById(id);
-    const API = window.RENTARD_API_BASE || '/api';
+    const API = window.RENTATO_API_BASE || window.RENTARD_API_BASE || '/api';
     const token = () => localStorage.getItem('rentard_token');
     const user = () => JSON.parse(localStorage.getItem('rentard_user') || 'null');
 
@@ -16,6 +16,14 @@
         day: '2-digit', month: 'short', year: 'numeric'
     });
 
+    const fmtTime = (d) => new Date(d).toLocaleTimeString('es-DO', {
+        hour: '2-digit', minute: '2-digit'
+    });
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
     const statusBadge = (status) => {
         const map = {
             CONFIRMED: { c: 'ok', t: 'Confirmada' },
@@ -24,7 +32,7 @@
             CANCELLED: { c: 'warn', t: 'Cancelada' }
         };
         const s = map[status] || { c: '', t: status };
-        return `<span class="badge2 ${s.c}">${s.t}</span>`;
+        return `<span class="badge2 ${s.c}">${esc(s.t)}</span>`;
     };
 
     const apiCall = async (path, options = {}) => {
@@ -38,7 +46,6 @@
         });
         const data = await res.json().catch(() => ({}));
         if (res.status === 401) {
-            // Stale/expired token — clear session and ask to re-login
             localStorage.removeItem('rentard_token');
             localStorage.removeItem('rentard_user');
             const backdrop = $('accountBackdrop');
@@ -57,7 +64,6 @@
         if (!token()) { showToastSafe('Inicia sesión primero.'); return; }
         const backdrop = $('accountBackdrop');
         if (!backdrop) return;
-        // Show admin tab only for ADMIN users
         const adminTab = $('adminTabBtn');
         if (adminTab) adminTab.style.display = (user()?.role === 'ADMIN') ? '' : 'none';
         backdrop.style.display = 'flex';
@@ -65,6 +71,7 @@
     };
 
     window.switchAccountTab = (tab) => {
+        stopChatPolling();
         document.querySelectorAll('#accountBackdrop .tab-btn').forEach(b => {
             b.classList.toggle('primary', b.dataset.tab === tab);
         });
@@ -93,22 +100,23 @@
             content.innerHTML = bookings.map(b => `
                 <div class="card" style="padding:14px; margin-bottom:12px;">
                     <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-                        <div style="width:100px; height:70px; background:url('${b.car.image || ''}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
+                        <div style="width:100px; height:70px; background:url('${esc(b.car.image || '')}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
                         <div style="flex:1; min-width:200px;">
-                            <h4 style="margin:0 0 4px;">${b.car.brand} ${b.car.model} (${b.car.year})</h4>
+                            <h4 style="margin:0 0 4px;">${esc(b.car.brand)} ${esc(b.car.model)} (${esc(b.car.year)})</h4>
                             <div class="small" style="color:var(--muted,#888);">
-                                ${b.car.location} · ${b.car.domain}
+                                ${esc(b.car.location)} · ${esc(b.car.domain)}
                             </div>
                             <div class="small" style="margin-top:6px;">
                                 <b>${fmtDate(b.startDate)}</b> → <b>${fmtDate(b.endDate)}</b>
                             </div>
                             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                                 ${statusBadge(b.status)}
-                                <span class="badge2">Depósito: ${b.depositStatus}</span>
+                                <span class="badge2">Depósito: ${esc(b.depositStatus)}</span>
                                 <span class="badge2 ok">${fmtCurrency(b.totalPrice)}</span>
                             </div>
                         </div>
                         <div style="display:flex; gap:6px; flex-direction:column;">
+                            <button class="btn" onclick="openBookingChat('${b.id}', 'bookings')">💬 Chat</button>
                             ${['PENDING', 'CONFIRMED'].includes(b.status)
                                 ? `<button class="btn" onclick="cancelBooking('${b.id}')">Cancelar</button>
                                    <button class="btn primary" onclick="completeBooking('${b.id}')">Marcar completada</button>`
@@ -118,12 +126,12 @@
                 </div>
             `).join('');
         } catch (e) {
-            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${e.message}</div>`;
+            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${esc(e.message)}</div>`;
         }
     };
 
     // ============================================
-    // Mis Vehículos (as owner)
+    // Mis Vehículos (as owner) — with Edit
     // ============================================
     const loadMyCars = async () => {
         try {
@@ -140,32 +148,184 @@
             content.innerHTML = cars.map(c => `
                 <div class="card" style="padding:14px; margin-bottom:12px;">
                     <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-                        <div style="width:100px; height:70px; background:url('${c.image || ''}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
+                        <div style="width:100px; height:70px; background:url('${esc(c.image || '')}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
                         <div style="flex:1; min-width:200px;">
-                            <h4 style="margin:0 0 4px;">${c.brand} ${c.model} (${c.year})</h4>
+                            <h4 style="margin:0 0 4px;">${esc(c.brand)} ${esc(c.model)} (${esc(c.year)})</h4>
                             <div class="small" style="color:var(--muted,#888);">
-                                ${c.location} · ${c.domain} · ${c.category}
+                                ${esc(c.location)} · ${esc(c.domain)} · ${esc(c.category)}
                             </div>
                             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                                 <span class="badge2 ok">${fmtCurrency(c.price)}/día</span>
                                 <span class="badge2">${c.trips || 0} viajes</span>
                                 <span class="badge2">${c._count?.bookings || 0} reservas históricas</span>
-                                ${c.verified ? '<span class="badge2 ok">Verificado</span>' : '<span class="badge2 warn">Sin verificar</span>'}
+                                ${c.verified ? '<span class="badge2 ok">Publicado</span>' : '<span class="badge2 warn">En revisión</span>'}
                             </div>
                         </div>
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:6px; flex-direction:column;">
+                            <button class="btn primary" onclick="editCar('${c.id}')">Editar</button>
                             <button class="btn" onclick="deleteCar('${c.id}')">Eliminar</button>
                         </div>
                     </div>
                 </div>
             `).join('');
         } catch (e) {
-            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${e.message}</div>`;
+            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${esc(e.message)}</div>`;
         }
     };
 
     // ============================================
-    // Reservas Recibidas (bookings on my cars)
+    // Edit vehicle — inline form rendered in the same panel
+    // ============================================
+    window.editCar = async (id) => {
+        try {
+            const cars = await apiCall('/cars/mine');
+            const c = cars.find(x => x.id === id);
+            if (!c) return showToastSafe('Vehículo no encontrado.');
+
+            const PROVS = ['Azua','Bahoruco','Barahona','Dajabón','Distrito Nacional','Duarte','El Seibo','Elías Piña','Espaillat','Hato Mayor','Hermanas Mirabal','Independencia','La Altagracia','La Romana','La Vega','María Trinidad Sánchez','Monseñor Nouel','Monte Cristi','Monte Plata','Pedernales','Peravia','Puerto Plata','Samaná','San Cristóbal','San José de Ocoa','San Juan','San Pedro de Macorís','Sánchez Ramírez','Santiago','Santiago Rodríguez','Valverde'];
+
+            const cats = {
+                LAND: ['Sedan', 'Jeepeta', 'Pickup', 'Micro', 'SUV', 'MOTORCYCLE'],
+                WATER: ['Bote', 'JetSki', 'Yate', 'Catamarán', 'BOAT'],
+                AIR: ['Helicóptero', 'Avioneta', 'Jet', 'HELICOPTER']
+            };
+
+            $('accountContent').innerHTML = `
+                <div class="card" style="padding:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="margin:0;">Editar: ${esc(c.brand)} ${esc(c.model)}</h3>
+                        <button class="btn" onclick="switchAccountTab('cars')">← Volver</button>
+                    </div>
+                    ${!c.verified ? '<div class="small" style="background:rgba(255,140,0,0.1); padding:8px 12px; border-radius:6px; margin-bottom:12px; color:var(--warn,#f80);">⚠️ Este vehículo está en revisión. Si lo editas, seguirá en revisión hasta que un administrador lo apruebe.</div>' : '<div class="small" style="background:rgba(40,180,80,0.1); padding:8px 12px; border-radius:6px; margin-bottom:12px;">ℹ️ Al editar, tu vehículo volverá a revisión y dejará de aparecer en el catálogo público hasta ser aprobado de nuevo.</div>'}
+                    <div class="form grid-form">
+                        <div class="field"><label>Marca</label><input id="eBrand" value="${esc(c.brand)}" /></div>
+                        <div class="field"><label>Modelo</label><input id="eModel" value="${esc(c.model)}" /></div>
+                        <div class="field"><label>Año</label><input id="eYear" type="number" value="${esc(c.year)}" /></div>
+                        <div class="field"><label>Tipo de vehículo</label>
+                            <select id="eDom" onchange="window._refreshEditCats()">
+                                <option value="LAND" ${c.domain === 'LAND' ? 'selected' : ''}>Terrestre</option>
+                                <option value="WATER" ${c.domain === 'WATER' ? 'selected' : ''}>Acuático</option>
+                                <option value="AIR" ${c.domain === 'AIR' ? 'selected' : ''}>Aéreo</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>Categoría</label>
+                            <select id="eCat">
+                                ${(cats[c.domain] || cats.LAND).map(opt => `<option value="${esc(opt)}" ${opt === c.category ? 'selected' : ''}>${esc(opt)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="field"><label>Capacidad</label><input id="eCapacity" type="number" value="${esc(c.capacity)}" /></div>
+                        <div class="field"><label>Precio / día (RD$)</label><input id="ePrice" type="number" value="${esc(c.price)}" /></div>
+                        <div class="field"><label>Depósito (RD$)</label><input id="eDeposit" type="number" value="${esc(c.deposit)}" /></div>
+                        <div class="field span2"><label>Provincia</label>
+                            <select id="eLoc">
+                                ${PROVS.map(p => `<option value="${esc(p)}" ${p === c.location ? 'selected' : ''}>${esc(p)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="field span2">
+                            <label>Foto del vehículo</label>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                <input id="eImageFile" type="file" accept="image/*" capture="environment" style="flex:1; min-width:200px;" onchange="window._uploadEditImage(event)" />
+                                <span class="small" style="color:var(--muted,#888);">o pega un enlace abajo</span>
+                            </div>
+                            <input id="eImage" type="url" value="${esc(c.image || '')}" placeholder="https://..." oninput="window._previewEditImage()" style="margin-top:6px; width:100%;" />
+                            <div class="small" id="eImageHint" style="color:var(--muted,#888); margin-top:4px;">Toma una foto o pega un enlace.</div>
+                            <img id="eImagePreview" src="${esc(c.image || '')}" style="${c.image ? '' : 'display:none;'} margin-top:8px; max-width:200px; border-radius:8px;" />
+                        </div>
+                        <div class="field span2"><label>Descripción</label><textarea id="eNote" rows="3">${esc(c.note || '')}</textarea></div>
+                        <div class="field span2" style="display:flex; gap:8px; justify-content:flex-end;">
+                            <button class="btn" onclick="switchAccountTab('cars')">Cancelar</button>
+                            <button class="btn primary" onclick="window._saveCarEdit('${c.id}')">Guardar cambios</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            window._refreshEditCats = () => {
+                const dom = $('eDom').value;
+                const sel = $('eCat');
+                sel.innerHTML = (cats[dom] || cats.LAND).map(opt => `<option value="${esc(opt)}">${esc(opt)}</option>`).join('');
+            };
+
+            window._previewEditImage = () => {
+                const url = $('eImage').value.trim();
+                const preview = $('eImagePreview');
+                if (url && /^https?:\/\//.test(url)) {
+                    preview.src = url;
+                    preview.style.display = 'block';
+                    preview.onerror = () => { preview.style.display = 'none'; };
+                } else {
+                    preview.style.display = 'none';
+                }
+            };
+
+            window._uploadEditImage = async (event) => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                const cfg = window.CLOUDINARY_CONFIG;
+                const hint = $('eImageHint');
+                if (!cfg || !cfg.cloud || !cfg.preset) {
+                    if (hint) hint.innerHTML = '⚠️ Subida directa aún no configurada. Por ahora pega un enlace.';
+                    showToastSafe('Subida de fotos no configurada. Usa un enlace.');
+                    event.target.value = '';
+                    return;
+                }
+                if (file.size > 8 * 1024 * 1024) {
+                    showToastSafe('La imagen pesa más de 8 MB.');
+                    return;
+                }
+                try {
+                    if (hint) hint.textContent = 'Subiendo foto...';
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('upload_preset', cfg.preset);
+                    const res = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, { method: 'POST', body: fd });
+                    const data = await res.json();
+                    if (data.secure_url) {
+                        $('eImage').value = data.secure_url;
+                        window._previewEditImage();
+                        if (hint) hint.textContent = 'Foto subida.';
+                    } else throw new Error(data.error?.message || 'Sin URL');
+                } catch (err) {
+                    if (hint) hint.textContent = 'No se pudo subir la foto.';
+                    showToastSafe('Error subiendo foto: ' + err.message);
+                }
+            };
+
+            window._saveCarEdit = async (carId) => {
+                const payload = {
+                    brand: $('eBrand').value.trim(),
+                    model: $('eModel').value.trim(),
+                    year: Number($('eYear').value),
+                    domain: $('eDom').value,
+                    category: $('eCat').value,
+                    capacity: Number($('eCapacity').value),
+                    price: Number($('ePrice').value),
+                    deposit: Number($('eDeposit').value),
+                    location: $('eLoc').value,
+                    image: $('eImage').value.trim(),
+                    note: $('eNote').value.trim()
+                };
+                if (!payload.brand || !payload.model || !payload.price) {
+                    return showToastSafe('Marca, modelo y precio son obligatorios.');
+                }
+                try {
+                    const data = await apiCall(`/cars/${carId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+                    showToastSafe(data.message || 'Vehículo actualizado.');
+                    switchAccountTab('cars');
+                } catch (e) {
+                    showToastSafe('Error: ' + e.message);
+                }
+            };
+        } catch (e) {
+            showToastSafe('Error: ' + e.message);
+        }
+    };
+
+    // ============================================
+    // Reservas Recibidas (as owner)
     // ============================================
     const loadOwnerBookings = async () => {
         try {
@@ -173,19 +333,19 @@
             const content = $('accountContent');
             if (!bookings.length) {
                 content.innerHTML = `<div style="padding:30px; text-align:center; color: var(--muted, #888);">
-                    Aún no has recibido reservas. Cuando alguien rente uno de tus vehículos, aparecerá aquí.
+                    Nadie ha reservado tus vehículos todavía.
                 </div>`;
                 return;
             }
             content.innerHTML = bookings.map(b => `
                 <div class="card" style="padding:14px; margin-bottom:12px;">
                     <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-                        <div style="width:100px; height:70px; background:url('${b.car.image || ''}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
+                        <div style="width:100px; height:70px; background:url('${esc(b.car.image || '')}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
                         <div style="flex:1; min-width:200px;">
-                            <h4 style="margin:0 0 4px;">${b.car.brand} ${b.car.model}</h4>
+                            <h4 style="margin:0 0 4px;">${esc(b.car.brand)} ${esc(b.car.model)}</h4>
                             <div class="small" style="color:var(--muted,#888);">
-                                Rentador: <b>${b.renter.name}</b> (Trust: ${b.renter.trustScore}%)
-                                ${b.renter.kycStatus === 'VERIFIED' ? ' · <span style="color:var(--ok,#2c2)">KYC ✓</span>' : ''}
+                                Rentador: <b>${esc(b.renter.name)}</b> (Reputación: ${esc(b.renter.trustScore)}%)
+                                ${b.renter.kycStatus === 'VERIFIED' ? ' · <span style="color:var(--ok,#2c2)">Verificado ✓</span>' : ''}
                             </div>
                             <div class="small" style="margin-top:6px;">
                                 <b>${fmtDate(b.startDate)}</b> → <b>${fmtDate(b.endDate)}</b>
@@ -196,15 +356,107 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:6px; flex-direction:column;">
+                            <button class="btn" onclick="openBookingChat('${b.id}', 'owner-bookings')">💬 Chat</button>
                             ${['PENDING', 'CONFIRMED'].includes(b.status)
-                                ? `<button class="btn primary" onclick="completeBooking('${b.id}')">Cerrar/Completar</button>`
+                                ? `<button class="btn primary" onclick="completeBooking('${b.id}')">Cerrar / completar</button>`
                                 : ''}
                         </div>
                     </div>
                 </div>
             `).join('');
         } catch (e) {
-            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${e.message}</div>`;
+            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${esc(e.message)}</div>`;
+        }
+    };
+
+    // ============================================
+    // Booking Chat — opens in the account panel, polls every 3s
+    // ============================================
+    let chatPollTimer = null;
+    let chatCurrentBookingId = null;
+    let chatLastCount = 0;
+
+    const stopChatPolling = () => {
+        if (chatPollTimer) clearInterval(chatPollTimer);
+        chatPollTimer = null;
+        chatCurrentBookingId = null;
+        chatLastCount = 0;
+    };
+
+    window.openBookingChat = (bookingId, returnTab) => {
+        stopChatPolling();
+        chatCurrentBookingId = bookingId;
+        $('accountContent').innerHTML = `
+            <div class="card" style="padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0;">Chat de la reserva</h3>
+                    <button class="btn" onclick="switchAccountTab('${esc(returnTab || 'bookings')}')">← Volver</button>
+                </div>
+                <div id="chatLog" style="height:340px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px;">
+                    <div style="text-align:center; color:var(--muted,#888); padding:20px;">Cargando mensajes...</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input id="chatInputAcc" placeholder="Escribe tu mensaje..." style="flex:1; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.2); color:inherit;" />
+                    <button class="btn primary" onclick="window._sendBookingMsg()">Enviar</button>
+                </div>
+            </div>
+        `;
+
+        const input = $('chatInputAcc');
+        if (input) input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') window._sendBookingMsg();
+        });
+
+        loadChatMessages(true);
+        chatPollTimer = setInterval(() => loadChatMessages(false), 3000);
+    };
+
+    const loadChatMessages = async (initial) => {
+        if (!chatCurrentBookingId) return;
+        try {
+            const data = await apiCall(`/chat/${chatCurrentBookingId}`);
+            const log = $('chatLog');
+            if (!log) { stopChatPolling(); return; }
+            if (!data.messages || !data.messages.length) {
+                if (initial) {
+                    log.innerHTML = `<div style="text-align:center; color:var(--muted,#888); padding:20px;">Aún no hay mensajes. Envía el primero.</div>`;
+                }
+                chatLastCount = 0;
+                return;
+            }
+            if (data.messages.length === chatLastCount && !initial) return; // nothing new
+            chatLastCount = data.messages.length;
+            const me = data.me;
+            log.innerHTML = data.messages.map(m => {
+                const mine = m.senderId === me;
+                return `<div style="align-self:${mine ? 'flex-end' : 'flex-start'}; max-width:75%; padding:8px 12px; border-radius:12px; background:${mine ? 'rgba(80,160,255,0.25)' : 'rgba(255,255,255,0.08)'};">
+                    <div class="small" style="opacity:0.7; margin-bottom:2px;">${esc(m.sender?.name || '')} · ${fmtTime(m.createdAt)}</div>
+                    <div>${esc(m.content)}</div>
+                </div>`;
+            }).join('');
+            log.scrollTop = log.scrollHeight;
+        } catch (e) {
+            // Stop polling on persistent errors
+            if (chatPollTimer) clearInterval(chatPollTimer);
+            const log = $('chatLog');
+            if (log) log.innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">No se pudo cargar el chat: ${esc(e.message)}</div>`;
+        }
+    };
+
+    window._sendBookingMsg = async () => {
+        const input = $('chatInputAcc');
+        if (!input) return;
+        const content = input.value.trim();
+        if (!content || !chatCurrentBookingId) return;
+        try {
+            await apiCall('/chat/send', {
+                method: 'POST',
+                body: JSON.stringify({ bookingId: chatCurrentBookingId, content })
+            });
+            input.value = '';
+            loadChatMessages(false);
+        } catch (e) {
+            showToastSafe('No se pudo enviar: ' + e.message);
         }
     };
 
@@ -225,16 +477,16 @@
                 ${cars.length} vehículo(s) esperando aprobación:</div>` + cars.map(c => `
                 <div class="card" style="padding:14px; margin-bottom:12px;">
                     <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-                        <div style="width:100px; height:70px; background:url('${c.image || ''}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
+                        <div style="width:100px; height:70px; background:url('${esc(c.image || '')}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
                         <div style="flex:1; min-width:200px;">
-                            <h4 style="margin:0 0 4px;">${c.brand} ${c.model} (${c.year})</h4>
+                            <h4 style="margin:0 0 4px;">${esc(c.brand)} ${esc(c.model)} (${esc(c.year)})</h4>
                             <div class="small" style="color:var(--muted,#888);">
-                                ${c.location} · ${c.domain} · ${c.category} · ${fmtCurrency(c.price)}/día
+                                ${esc(c.location)} · ${esc(c.domain)} · ${esc(c.category)} · ${fmtCurrency(c.price)}/día
                             </div>
                             <div class="small" style="margin-top:4px;">
-                                Publicado por: <b>${c.owner?.name || '—'}</b> (${c.owner?.email || ''})
+                                Publicado por: <b>${esc(c.owner?.name || '—')}</b> (${esc(c.owner?.email || '')})
                             </div>
-                            <div class="small" style="margin-top:4px;">${c.note || 'Sin descripción.'}</div>
+                            <div class="small" style="margin-top:4px;">${esc(c.note || 'Sin descripción.')}</div>
                             <div class="small" style="margin-top:4px;">
                                 ${c.dnaStatus === 'REJECTED' ? '<span class="badge2 warn">Rechazado antes</span>' : ''}
                             </div>
@@ -247,7 +499,7 @@
                 </div>
             `).join('');
         } catch (e) {
-            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${e.message}</div>`;
+            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${esc(e.message)}</div>`;
         }
     };
 
@@ -280,9 +532,7 @@
             await apiCall(`/bookings/${id}/cancel`, { method: 'POST' });
             showToastSafe('Reserva cancelada.');
             switchAccountTab('bookings');
-        } catch (e) {
-            showToastSafe('Error: ' + e.message);
-        }
+        } catch (e) { showToastSafe('Error: ' + e.message); }
     };
 
     window.completeBooking = async (id) => {
@@ -291,9 +541,7 @@
             const data = await apiCall(`/bookings/${id}/complete`, { method: 'POST' });
             showToastSafe(data.message || 'Reserva completada.');
             switchAccountTab('bookings');
-        } catch (e) {
-            showToastSafe('Error: ' + e.message);
-        }
+        } catch (e) { showToastSafe('Error: ' + e.message); }
     };
 
     window.deleteCar = async (id) => {
@@ -302,9 +550,7 @@
             await apiCall(`/cars/${id}`, { method: 'DELETE' });
             showToastSafe('Vehículo eliminado.');
             switchAccountTab('cars');
-        } catch (e) {
-            showToastSafe('Error: ' + e.message);
-        }
+        } catch (e) { showToastSafe('Error: ' + e.message); }
     };
 
     const showToastSafe = (text) => {
@@ -320,23 +566,26 @@
         if (btn) btn.addEventListener('click', openAccount);
 
         const close = $('closeAccount');
-        if (close) close.addEventListener('click', () => $('accountBackdrop').style.display = 'none');
+        if (close) close.addEventListener('click', () => {
+            stopChatPolling();
+            $('accountBackdrop').style.display = 'none';
+        });
 
         const backdrop = $('accountBackdrop');
         if (backdrop) backdrop.addEventListener('click', (e) => {
-            if (e.target === backdrop) backdrop.style.display = 'none';
+            if (e.target === backdrop) {
+                stopChatPolling();
+                backdrop.style.display = 'none';
+            }
         });
 
-        // Reflect login state for the My Account button
         const refreshBtn = () => {
             if (!btn) return;
             btn.style.display = token() ? '' : 'none';
         };
         refreshBtn();
 
-        // Poll storage so login from another tab/script reflects here
         window.addEventListener('storage', refreshBtn);
-        // Also re-check periodically (since main.js writes to localStorage in the same tab)
         setInterval(refreshBtn, 1500);
     });
 })();

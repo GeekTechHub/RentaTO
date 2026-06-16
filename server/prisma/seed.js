@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('[RENTARD] Seeding database...');
+    console.log('[rentato] Seeding database...');
 
     // ============================================
     // 01. Users
@@ -47,7 +47,7 @@ async function main() {
         }
     });
 
-    console.log('[RENTARD] Users created: admin, owner, renter');
+    console.log('[rentato] Users created: admin, owner, renter');
 
     // ============================================
     // 02. Cars / Vehicles (diverse domains)
@@ -174,8 +174,8 @@ async function main() {
 
     await prisma.car.createMany({ data: cars });
 
-    console.log(`[RENTARD] ${cars.length} vehículos creados (${cars.filter(c=>c.domain==='LAND').length} terrestres, ${cars.filter(c=>c.domain==='WATER').length} acuáticos, ${cars.filter(c=>c.domain==='AIR').length} aéreos)`);
-    console.log('[RENTARD] Seed completado.');
+    console.log(`[rentato] ${cars.length} vehículos creados (${cars.filter(c=>c.domain==='LAND').length} terrestres, ${cars.filter(c=>c.domain==='WATER').length} acuáticos, ${cars.filter(c=>c.domain==='AIR').length} aéreos)`);
+    console.log('[rentato] Seed completado.');
 }
 
 main()

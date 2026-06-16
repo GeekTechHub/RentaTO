@@ -4,9 +4,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RENTARD | Renta de Vehículos entre Personas en RD (Cualquier Año)</title>
+  <title>RentaTO | Renta de vehículos entre personas en RD</title>
   <meta name="description"
-    content="RENTARD: renta y publica vehículos en República Dominicana. Aceptamos cualquier año: manda la seguridad, verificación y reglas claras." />
+    content="RentaTO: renta y publica vehículos en República Dominicana. Carros, motores, lanchas, jetskis, yates y más — cualquier año, con identidad verificada y reglas claras." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&display=swap" rel="stylesheet">
@@ -22,15 +22,15 @@
         <a class="brand" href="#inicio">
           <div class="logo" aria-hidden="true"></div>
           <div>
-            <h1>RENTARD</h1>
-            <p>Renta P2P • República Dominicana • Supremacía x1000</p>
+            <h1>RentaTO</h1>
+            <p>Renta de vehículos entre personas • República Dominicana</p>
           </div>
         </a>
 
         <nav aria-label="Navegación principal">
           <ul>
             <li><a href="#como">Cómo funciona</a></li>
-            <li><a href="#vehiculos">Directorio de Vehículos</a></li>
+            <li><a href="#vehiculos">Vehículos</a></li>
             <li><a href="#" id="navPublicar">Publicar Vehículo</a></li>
             <li><a href="#como">Seguridad</a></li>
           </ul>
@@ -74,7 +74,7 @@
           </p>
 
           <div class="hero-cta">
-            <a class="btn primary" href="#vehiculos">Explorar Catálogo Universal</a>
+            <a class="btn primary" href="#vehiculos">Ver vehículos disponibles</a>
             <button class="btn" id="openPublishHero" type="button">Publicar mi vehículo</button>
           </div>
 
@@ -137,7 +137,22 @@
                 <option>Helicóptero</option>
               </select>
 
-              <button class="btn" id="go" type="button">Buscar Resultantes</button>
+              <button class="btn" id="go" type="button">Buscar</button>
+            </div>
+
+            <div class="search-row" style="margin-top:10px;">
+              <div class="input">
+                <span aria-hidden="true">💵</span>
+                <input id="minPrice" type="number" min="0" placeholder="Precio mín. (RD$/día)" autocomplete="off" />
+              </div>
+              <div class="input">
+                <span aria-hidden="true">💵</span>
+                <input id="maxPrice" type="number" min="0" placeholder="Precio máx. (RD$/día)" autocomplete="off" />
+              </div>
+              <div class="input">
+                <span aria-hidden="true">👥</span>
+                <input id="minCapacity" type="number" min="1" placeholder="Mínimo de personas" autocomplete="off" />
+              </div>
             </div>
           </div>
         </div>
@@ -153,18 +168,18 @@
               <div class="stat" role="button" onclick="openFeature('limited')" style="cursor:pointer"><b>Sin
                   límite</b><span>Año del vehículo</span></div>
               <div class="stat" role="button" onclick="openFeature('verification')" style="cursor:pointer">
-                <b>Verificación</b><span>Docs + fotos + checklist</span>
+                <b>Verificación</b><span>Documentos, fotos y chequeo</span>
               </div>
               <div class="stat" role="button" onclick="openFeature('escrow')" style="cursor:pointer">
-                <b>Escrow</b><span>Daños / multas protegidas</span>
+                <b>Depósito</b><span>Protege contra daños y multas</span>
               </div>
               <div class="stat" role="button" onclick="openFeature('neural')" style="cursor:pointer">
-                <b>Neural</b><span>Estrellas y comentarios</span>
+                <b>Reseñas</b><span>Estrellas y comentarios reales</span>
               </div>
             </div>
 
             <div class="pill" style="justify-content:center;">
-              Transparente: sin “sorpresas” ni cuentos raros.
+              Transparente: sin sorpresas ni cuentos raros.
             </div>
           </div>
         </div>
@@ -174,39 +189,39 @@
     <section class="section" id="como">
       <div class="section-head">
         <div>
-          <h2>Protocolo RENTARD (Leyes 126-02, 63-17 y 146-02)</h2>
-          <p>Operación legal y segura a nivel de firmware.</p>
+          <h2>Cómo funciona</h2>
+          <p>Renta segura entre personas, con respaldo legal (Leyes 126-02, 63-17 y 146-02).</p>
         </div>
-        <span class="pill"><span class="dot" aria-hidden="true"></span> P2P con reglas claras</span>
+        <span class="pill"><span class="dot" aria-hidden="true"></span> Reglas claras de principio a fin</span>
       </div>
 
       <div class="grid">
         <article class="tile">
           <div class="icon" aria-hidden="true">🧾</div>
-          <h3>1) Verificación KYC</h3>
-          <p>Dueño y conductor verifican identidad. El vehículo sube fotos, docs y checklist de seguridad.</p>
+          <h3>1) Verifica tu identidad</h3>
+          <p>Dueño y conductor verifican su identidad. El vehículo se publica con fotos, documentos y un chequeo básico.</p>
         </article>
 
         <article class="tile">
           <div class="icon" aria-hidden="true">📅</div>
-          <h3>2) Reserva Contratada</h3>
-          <p>El cliente elige fechas, acepta la Ley y deposita en custodia Smart Escrow.</p>
+          <h3>2) Reserva con depósito</h3>
+          <p>El cliente elige fechas, acepta las condiciones y queda en garantía el depósito.</p>
         </article>
 
         <article class="tile">
           <div class="icon" aria-hidden="true">📸</div>
-          <h3>3) Evidencia Irrefutable</h3>
-          <p>Fotos de entrega/recibo guardadas con hashing inviolable SHA-256.</p>
+          <h3>3) Entrega con evidencia</h3>
+          <p>Fotos de entrega y devolución guardadas para protección mutua, con respaldo digital.</p>
         </article>
       </div>
     </section>
 
-    <!-- Recomendaciones Neurales -->
+    <!-- Recomendaciones -->
     <section class="section" id="recommendations" style="display:none;">
       <div class="section-head">
         <div>
-          <h2>Recomendaciones Neurales</h2>
-          <p>Activos recomendados para ti basados en tu Social DNA.</p>
+          <h2>Recomendado para ti</h2>
+          <p>Vehículos que podrían interesarte según tu actividad.</p>
         </div>
       </div>
       <div class="listings" id="recommendedListings"></div>
@@ -227,9 +242,9 @@
   <footer>
     <div class="wrap">
       <div class="foot">
-        <div>© <span id="year"></span> RENTARD — Marketplace Universal de Vehículos (Cualquier Año).</div>
+        <div>© <span id="year"></span> RentaTO — Renta de vehículos entre personas en RD.</div>
         <div class="links">
-          <a href="#como">Protocolo</a>
+          <a href="#como">Cómo funciona</a>
           <a href="#vehiculos">Catálogo</a>
           <a href="#inicio">Inicio</a>
         </div>
@@ -243,7 +258,7 @@
   <div class="modal-backdrop" id="detailsBackdrop" style="display:none;">
     <div class="modal">
       <div class="modal-head">
-        <h3 id="detailsTitle">Mapping del Vehículo</h3>
+        <h3 id="detailsTitle">Detalles del vehículo</h3>
         <button class="btn" id="closeDetails" type="button">✕ Cerrar</button>
       </div>
       <div class="modal-body" id="detailsContent">

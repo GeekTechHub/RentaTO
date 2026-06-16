@@ -1,4 +1,4 @@
-// RENTARD | Supremacía x1000 - Universal Taxonomy (Land, Water, Air)
+// RentaTO — frontend monolito (vanilla JS). Land / Water / Air taxonomy.
 const $ = (id) => document.getElementById(id);
 const API_BASE = window.RENTARD_API_BASE || '/api';
 
@@ -56,6 +56,12 @@ const fetchCars = async (q = '', loc = '', type = '') => {
   try {
     const params = new URLSearchParams({ q, loc, type });
     if (currentDomain && currentDomain !== 'ALL') params.set('domain', currentDomain);
+    const minP = $('minPrice')?.value;
+    const maxP = $('maxPrice')?.value;
+    const minC = $('minCapacity')?.value;
+    if (minP) params.set('minPrice', minP);
+    if (maxP) params.set('maxPrice', maxP);
+    if (minC) params.set('minCapacity', minC);
     const res = await fetch(`${API_BASE}/cars?${params}`);
     cars = await res.json();
     renderListings(cars, 'listings');
@@ -75,7 +81,7 @@ const fetchRecommendations = async () => {
       $('recommendations').style.display = 'block';
       renderListings(recs, 'recommendedListings');
     }
-  } catch (err) { console.error('Recommendation Sync Error', err); }
+  } catch (err) { console.error('Error cargando recomendaciones', err); }
 };
 
 // ==========================
@@ -88,7 +94,7 @@ function renderListings(list, containerId) {
 
   if (!list.length) {
     wrap.innerHTML = `<div class="wide" style="grid-column: span 12;">
-        <b>Cero activos localizados.</b><div class="small" style="margin-top:6px">Cambia tu dominio (Terrestre, Acuático, Aéreo) o ajusta la búsqueda.</div>
+        <b>No encontramos vehículos.</b><div class="small" style="margin-top:6px">Cambia el tipo (Terrestre, Acuático, Aéreo) o ajusta la búsqueda.</div>
       </div>`;
     return;
   }
@@ -113,8 +119,8 @@ function renderListings(list, containerId) {
           </div>
           <div class="badges">
             ${badgeVerify}
-            <span class="badge2">Deposit: ${formatCurrency(c.deposit)}</span>
-            <span class="badge2">Cualquier Año</span>
+            <span class="badge2">Depósito: ${formatCurrency(c.deposit)}</span>
+            <span class="badge2">Cualquier año</span>
           </div>
           <div class="meta" style="margin-top:8px">${c.note || 'Sin descripción.'}</div>
         </div>
@@ -136,20 +142,20 @@ function renderListings(list, containerId) {
 window.openFeature = (type) => {
   const features = {
     limited: {
-      title: 'Polisémica Universal: Sin Límite de Año',
-      body: 'En RENTARD, el año del vehículo no es un factor de exclusión. Nos enfocamos en la integridad mecánica y estética. Cualquier modelo, desde clásicos hasta último modelo, puede ser inyectado al ecosistema si cumple con el Protocolo de Seguridad.'
+      title: 'Cualquier año, sin límite',
+      body: 'En RentaTO el año del vehículo no descalifica. Lo que importa es que esté en buen estado mecánico y estético. Desde clásicos hasta último modelo, cualquier vehículo puede publicarse si cumple con el chequeo básico de seguridad.'
     },
     verification: {
-      title: 'Verificación de Identidad y Activo',
-      body: 'Cada usuario pasa por un proceso de KYC (Know Your Customer) biométrico. El vehículo es inspeccionado digitalmente mediante un checklist de 21 puntos y fotos en tiempo real con hashing SHA-256 para garantizar transparencia total.'
+      title: 'Verificación de identidad y del vehículo',
+      body: 'Cada usuario pasa por una verificación de identidad. El vehículo se publica con fotos y datos básicos para que tanto dueño como cliente sepan exactamente lo que se está alquilando.'
     },
     escrow: {
-      title: 'Smart Escrow: Protección Total',
-      body: 'Los fondos de reserva y el depósito de garantía se mantienen en un contrato inteligente de custodia (Escrow). Solo se liberan tras la confirmación mutua de entrega exitosa, protegiendo tanto al dueño como al rentador de cualquier eventualidad.'
+      title: 'Depósito protegido',
+      body: 'El depósito de garantía se retiene durante la renta y se libera al devolver el vehículo en buen estado. Si hay daños o multas, queda como respaldo para resolverlos sin pleitos.'
     },
     neural: {
-      title: 'Reputación Neural y Feedback',
-      body: 'El sistema Neural analiza el comportamiento histórico de los usuarios para generar un Trust Score (Social DNA). Las estrellas y comentarios no son solo texto; son trazas de confianza que determinan el acceso a activos de mayor nivel.'
+      title: 'Reseñas y reputación',
+      body: 'Después de cada renta, ambas partes pueden calificarse con estrellas y comentarios. Esa reputación queda visible en el perfil y ayuda a otros usuarios a confiar.'
     }
   };
 
@@ -182,58 +188,47 @@ window.openDetails = (id) => {
   $('detailsContent').innerHTML = `
         <div class="modal-grid">
             <div class="panel">
-                <h4>Detalles Técnicos y Contractuales</h4>
+                <h4>Detalles del vehículo</h4>
                 <div class="kv">
-                    <b>ID de Hash:</b> ${car.id}<br/>
-                    <b>Dominio:</b> ${car.domain}<br/>
-                    <b>Categoría:</b> ${car.category || car.type} • <b>Transmisión:</b> ${car.transmission || 'AUTOMATIC'}<br/>
-                    <b>Tipo de Energía:</b> ${car.energyType || 'GASOLINE'} • <b>Capacidad:</b> ${car.capacity || 4} pers.<br/>
-                    <b>Autonomía:</b> ${car.fuelRange || 500} KM/Millas<br/>
-                    <b>Placa/Registro:</b> ${car.licensePlate || 'N/D'}<br/>
-                    <b>Chasis/VIN:</b> ${car.chassisNumber || 'N/D'}<br/>
-                    <b>Nivel Operador:</b> ${car.requiresOperatorLevel || 'STANDARD_LICENSE'}<br/>
-                    <b>Perfil Seguridad:</b> <span class="badge2 ok" style="padding: 2px 6px; font-size: 10px;">${car.safetyProfile || 'land_standard'}</span><br/>
+                    <b>Tipo:</b> ${domainLabel(car.domain)}<br/>
+                    <b>Categoría:</b> ${car.category || car.type} • <b>Transmisión:</b> ${car.transmission === 'MANUAL' ? 'Mecánica' : 'Automática'}<br/>
+                    <b>Combustible:</b> ${car.energyType || 'GASOLINE'} • <b>Capacidad:</b> ${car.capacity || 4} personas<br/>
+                    <b>Autonomía:</b> ${car.fuelRange || 500} km<br/>
+                    <b>Placa:</b> ${car.licensePlate || 'N/D'}<br/>
+                    <b>Licencia requerida:</b> ${car.requiresOperatorLevel || 'STANDARD_LICENSE'}<br/>
                     <br/>
-                    <b>Propietario / Trust:</b> ${car.owner ? car.owner.name : 'VVIP'} (Score: ${trustScore}%)<br/>
+                    <b>Dueño:</b> ${car.owner ? car.owner.name : '—'} (Reputación: ${trustScore}%)<br/>
                     <b>Ubicación:</b> ${car.location}<br/>
-                    <b>Tarifa Diaria:</b> ${formatCurrency(car.price)}/día<br/>
-                    <b>Póliza Smart Escrow:</b> ${formatCurrency(car.deposit)}<br/>
+                    <b>Precio:</b> ${formatCurrency(car.price)}/día<br/>
+                    <b>Depósito de garantía:</b> ${formatCurrency(car.deposit)}<br/>
                     <br/>
-                    <b>Condiciones Reportadas:</b> ${car.note || 'Sin reportes irregulares.'}
+                    <b>Descripción:</b> ${car.note || 'Sin descripción.'}
                 </div>
-                <div class="small" style="margin-top:15px; color: var(--warn)">Recordatorio: Todo contrato se ampara bajo las Leyes 126-02 (Firmas Digitales), 63-17 (Tránsito), 146-02 (Seguros), y regulaciones sectoriales (IDAC/Armada).</div>
+                <div class="small" style="margin-top:15px; color: var(--warn)">Toda renta se rige por las leyes dominicanas aplicables (Tránsito 63-17, Seguros 146-02, Firmas Digitales 126-02).</div>
             </div>
-            
+
             <div class="panel">
-                <h4>Reservar (Escrow Integrado)</h4>
+                <h4>Reservar</h4>
                 <div class="form">
                     <div class="field">
-                        <label>Extracción Start</label>
+                        <label>Fecha de entrega</label>
                         <input id="bkStart" type="date">
                     </div>
                     <div class="field">
-                        <label>Retorno Final</label>
+                        <label>Fecha de devolución</label>
                         <input id="bkEnd" type="date">
                     </div>
                     <div class="field span2">
                         <label style="display:flex; gap:8px; align-items:flex-start;">
                         <input id="bkAgree" type="checkbox" style="margin-top:2px">
-                        <span class="small">Acepto los términos de la Taxonomía Universal y me declaro portador de las credenciales adecuadas. Admito ser retenido el depósito de daños.</span>
+                        <span class="small">Acepto las condiciones de uso. Entiendo que el depósito de garantía queda retenido durante la renta.</span>
                         </label>
                     </div>
                     <div class="field span2">
                         <button class="btn primary" id="bkConfirm" type="button" onclick="reserveCar()">Reservar ahora</button>
                     </div>
-                </div>
-            </div>
-            
-            <div class="panel" style="grid-column: span 2;">
-                <h4>Chat con el propietario</h4>
-                <div class="chatbox">
-                    <div class="chatlog" id="chatMessages" aria-label="Mensajes">Esperando sincronización...</div>
-                    <div style="display:flex; gap:8px;">
-                        <input id="chatInput" placeholder="Emitir traza neural..." style="flex:1" class="btn" />
-                        <button class="btn primary" onclick="sendChat()">Enviar</button>
+                    <div class="field span2 small" style="color:var(--muted,#888);">
+                        Después de reservar podrás chatear con el dueño desde <b>Mi Cuenta → Mis Reservas</b>.
                     </div>
                 </div>
             </div>
@@ -244,10 +239,10 @@ window.openDetails = (id) => {
 };
 
 window.reserveCar = async () => {
-  if (!token) return showToast('Petición Abortada: Requiere Identidad Neural (Iniciar Sesión).');
+  if (!token) return showToast('Inicia sesión primero para reservar.');
   const start = $('bkStart').value;
   const end = $('bkEnd').value;
-  if (!start || !end || !$('bkAgree').checked) return showToast('Valida fechas y condiciones de la Póliza Escrow.');
+  if (!start || !end || !$('bkAgree').checked) return showToast('Completa las fechas y acepta las condiciones.');
 
   const car = cars.find(c => c.id === activeCarId);
   if (!car) return;
@@ -259,11 +254,11 @@ window.reserveCar = async () => {
       body: JSON.stringify({ carId: car.id, startDate: new Date(start), endDate: new Date(end), totalPrice: car.price })
     });
     const data = await res.json();
-    showToast(data.message || 'Escrow sincronizado correctamente.');
+    showToast(data.message || (res.ok ? 'Reserva confirmada.' : (data.error || 'No se pudo reservar.')));
     if (res.ok) $('detailsBackdrop').style.display = 'none';
     fetchCars();
   } catch (err) {
-    showToast('Escrow Network Denied.');
+    showToast('No se pudo conectar con el servidor.');
   }
 };
 
@@ -279,26 +274,7 @@ const PROVINCES = [
   "San Pedro de Macorís", "Sánchez Ramírez", "Santiago", "Santiago Rodríguez", "Valverde"
 ];
 
-window.sendChat = async () => {
-  const input = $('chatInput');
-  const content = input.value.trim();
-  if (!content || !token) return;
-
-  const car = cars.find(c => c.id === activeCarId);
-  if (!car) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/chat/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ bookingId: 'general-inquiry', receiverId: car.ownerId, content })
-    });
-    if (res.ok) {
-      $('chatMessages').innerHTML += `<div class="msg me">${content}</div>`;
-      input.value = '';
-    }
-  } catch (err) { showToast('Fallo transmisión neural.'); }
-};
+// Booking chat lives inside Mi Cuenta (account.js); no global sendChat here.
 
 window.openPublish = () => {
   if (!token) {
@@ -317,7 +293,7 @@ window.openPublish = () => {
                     <option value="OWNER">Quiero publicar mis vehículos</option>
                 </select>
                 <button class="btn primary" id="authSubmit" onclick="handleAuth()">Acceder</button>
-                <div class="small text-center">Protocolo regido por la Ley Biométrica RD.</div>
+                <div class="small text-center">Tus datos quedan protegidos. Solo los usamos para verificar identidad.</div>
             </div>
         </div>`;
     window.authMode = 'login';
@@ -384,10 +360,14 @@ window.openPublish = () => {
                     <input id="pDeposit" type="number" placeholder="Se devuelve al final si todo va bien" />
                 </div>
                 <div class="field span2">
-                    <label>Foto del vehículo (enlace de imagen)</label>
-                    <input id="pImage" type="url" placeholder="Pega aquí el enlace de una foto (https://...)" oninput="previewImage()" />
-                    <div class="small" style="color:var(--muted,#888); margin-top:4px;">
-                        Por ahora pega un enlace de foto. Pronto podrás subirla directo desde tu teléfono.
+                    <label>Foto del vehículo</label>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <input id="pImageFile" type="file" accept="image/*" capture="environment" style="flex:1; min-width:200px;" onchange="uploadCarImage(event)" />
+                        <span class="small" style="color:var(--muted,#888);">o pega un enlace abajo</span>
+                    </div>
+                    <input id="pImage" type="url" placeholder="https://..." oninput="previewImage()" style="margin-top:6px; width:100%;" />
+                    <div class="small" id="pImageHint" style="color:var(--muted,#888); margin-top:4px;">
+                        Toma una foto con tu teléfono o pega un enlace de imagen.
                     </div>
                     <img id="pImagePreview" style="display:none; margin-top:8px; max-width:200px; border-radius:8px;" />
                 </div>
@@ -555,6 +535,49 @@ window.previewImage = () => {
   }
 };
 
+// --- Cloudinary unsigned upload (graceful fallback to URL paste) ---
+// To enable, set in window before main.js runs:
+//   window.CLOUDINARY_CONFIG = { cloud: 'tu_cloud_name', preset: 'tu_unsigned_preset' };
+// You can also place it in index.html as an inline <script> before the main.js include.
+window.uploadCarImage = async (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const cfg = window.CLOUDINARY_CONFIG;
+  const hint = $('pImageHint');
+  if (!cfg || !cfg.cloud || !cfg.preset) {
+    if (hint) hint.innerHTML = '⚠️ Subida directa aún no configurada. Por ahora pega un enlace de imagen abajo.';
+    showToast('Aún no se ha configurado el servicio de subida de fotos. Usa un enlace por ahora.');
+    event.target.value = '';
+    return;
+  }
+  if (file.size > 8 * 1024 * 1024) {
+    showToast('La imagen pesa más de 8 MB. Comprime o usa otra.');
+    return;
+  }
+  try {
+    if (hint) hint.textContent = 'Subiendo foto...';
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', cfg.preset);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+    if (data.secure_url) {
+      $('pImage').value = data.secure_url;
+      previewImage();
+      if (hint) hint.textContent = 'Foto subida correctamente.';
+      showToast('Foto subida.');
+    } else {
+      throw new Error(data.error?.message || 'Sin URL devuelta');
+    }
+  } catch (err) {
+    if (hint) hint.textContent = 'No se pudo subir la foto. Intenta con un enlace.';
+    showToast('No se pudo subir la foto: ' + err.message);
+  }
+};
+
 window.publishCar = async () => {
   const payload = {
     domain: $('pDom').value,
@@ -633,6 +656,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if ($('domain-land')) $('domain-land').onclick = () => setDomain('LAND');
   if ($('domain-water')) $('domain-water').onclick = () => setDomain('WATER');
   if ($('domain-air')) $('domain-air').onclick = () => setDomain('AIR');
+
+  // Submit search on Enter from any filter input
+  ['q', 'minPrice', 'maxPrice', 'minCapacity'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSearch(); });
+  });
+  ['loc', 'type'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('change', handleSearch);
+  });
 
   ['openPublishHero', 'openPublishTop'].forEach(id => {
     if ($(id)) $(id).onclick = () => {
