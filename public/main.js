@@ -31,12 +31,14 @@ const logout = () => {
   localStorage.removeItem('rentard_user');
   localStorage.removeItem('rentard_token');
   updateAuthUI();
+  showToast('Sesión cerrada.');
 };
+window.logout = logout;
 
 const updateAuthUI = () => {
   const loginBtn = $('openPublishTop');
   if (currentUser) {
-    if (loginBtn) loginBtn.innerText = `DNA: ${currentUser.name}`;
+    if (loginBtn) loginBtn.innerText = `Salir (${currentUser.name.split(' ')[0]})`;
   } else {
     if (loginBtn) loginBtn.innerText = 'Login / Publicar';
   }
@@ -300,14 +302,23 @@ window.openPublish = () => {
   if (!token) {
     $('publishFormContent').innerHTML = `
         <div class="panel" style="max-width:400px; margin:0 auto;">
-            <h4>Login para Propietarios</h4>
+            <div id="authTabs" style="display:flex; gap:8px; margin-bottom:16px;">
+                <button class="btn primary" id="tabLogin" type="button" onclick="switchAuthMode('login')" style="flex:1;">Iniciar Sesión</button>
+                <button class="btn" id="tabRegister" type="button" onclick="switchAuthMode('register')" style="flex:1;">Registrarse</button>
+            </div>
             <div class="form" style="display:flex; flex-direction:column; gap:12px;">
+                <input class="btn" id="authName" placeholder="Nombre completo" type="text" style="display:none;" />
                 <input class="btn" id="authEmail" placeholder="Correo" type="email" />
-                <input class="btn" id="authPass" type="password" placeholder="Contraseña Neural" />
-                <button class="btn primary" onclick="handleLogin()">Acceder</button>
+                <input class="btn" id="authPass" type="password" placeholder="Contraseña (mín. 8 caracteres)" />
+                <select class="btn" id="authRole" style="display:none;">
+                    <option value="RENTER">Quiero rentar vehículos</option>
+                    <option value="OWNER">Quiero publicar mis vehículos</option>
+                </select>
+                <button class="btn primary" id="authSubmit" onclick="handleAuth()">Acceder</button>
                 <div class="small text-center">Protocolo regido por la Ley Biométrica RD.</div>
             </div>
         </div>`;
+    window.authMode = 'login';
   } else {
     $('publishFormContent').innerHTML = `
         <div class="panel">
@@ -452,9 +463,58 @@ window.updatePubCatsAndDefaults = () => {
   }
 };
 
-window.handleLogin = async () => {
-  const email = $('authEmail').value;
+window.switchAuthMode = (mode) => {
+  window.authMode = mode;
+  const isReg = mode === 'register';
+  const nameField = $('authName');
+  const roleField = $('authRole');
+  const submitBtn = $('authSubmit');
+  const tabLogin = $('tabLogin');
+  const tabRegister = $('tabRegister');
+  if (nameField) nameField.style.display = isReg ? 'block' : 'none';
+  if (roleField) roleField.style.display = isReg ? 'block' : 'none';
+  if (submitBtn) submitBtn.textContent = isReg ? 'Crear Cuenta' : 'Acceder';
+  if (tabLogin) tabLogin.className = isReg ? 'btn' : 'btn primary';
+  if (tabRegister) tabRegister.className = isReg ? 'btn primary' : 'btn';
+};
+
+window.handleAuth = async () => {
+  const mode = window.authMode || 'login';
+  const email = $('authEmail').value.trim();
   const pass = $('authPass').value;
+
+  if (!email || !pass) return showToast('Completa correo y contraseña.');
+
+  if (mode === 'register') {
+    const name = $('authName').value.trim();
+    const role = $('authRole').value;
+    if (!name) return showToast('Ingresa tu nombre.');
+    if (pass.length < 8) return showToast('La contraseña debe tener al menos 8 caracteres.');
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass, name, role })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Cuenta creada. Iniciando sesión...');
+        // Auto-login after register
+        await doLogin(email, pass);
+      } else {
+        const msg = data.issues ? data.issues.map(i => i.message).join('. ') : data.error;
+        showToast('No se pudo registrar: ' + msg);
+      }
+    } catch (err) { showToast('Servidor no disponible.'); }
+    return;
+  }
+
+  // login mode
+  await doLogin(email, pass);
+};
+
+const doLogin = async (email, pass) => {
   try {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
@@ -465,13 +525,16 @@ window.handleLogin = async () => {
     if (res.ok) {
       saveSession(data);
       openPublish();
-      showToast('Autorización Concedida.');
+      showToast('Sesión iniciada.');
       fetchRecommendations();
     } else {
-      showToast('Rechazo DNA: ' + data.error);
+      showToast('Acceso denegado: ' + (data.error || 'credenciales inválidas'));
     }
-  } catch (err) { showToast('Server offline.'); }
+  } catch (err) { showToast('Servidor no disponible.'); }
 };
+
+// Backward-compat: keep handleLogin working if referenced elsewhere
+window.handleLogin = () => doLogin($('authEmail').value.trim(), $('authPass').value);
 
 window.publishCar = async () => {
   const payload = {
@@ -547,7 +610,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if ($('domain-air')) $('domain-air').onclick = () => setDomain('AIR');
 
   ['openPublishHero', 'openPublishTop'].forEach(id => {
-    if ($(id)) $(id).onclick = openPublish;
+    if ($(id)) $(id).onclick = () => {
+      if (id === 'openPublishTop' && currentUser) {
+        logout();
+      } else {
+        openPublish();
+      }
+    };
   });
 
   if ($('closeDetails')) $('closeDetails').onclick = () => $('detailsBackdrop').style.display = 'none';

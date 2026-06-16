@@ -37,6 +37,15 @@
             }
         });
         const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+            // Stale/expired token — clear session and ask to re-login
+            localStorage.removeItem('rentard_token');
+            localStorage.removeItem('rentard_user');
+            const backdrop = $('accountBackdrop');
+            if (backdrop) backdrop.style.display = 'none';
+            showToastSafe('Tu sesión expiró. Inicia sesión de nuevo.');
+            throw new Error('Sesión expirada');
+        }
         if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
         return data;
     };
