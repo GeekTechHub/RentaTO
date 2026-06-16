@@ -52,7 +52,23 @@ async function main() {
     // ============================================
     // 02. Cars / Vehicles (diverse domains)
     // ============================================
-    await prisma.car.deleteMany({});
+    // Identificar carros del seed por placas conocidas para no tocar los de usuarios reales
+    const seedPlates = [
+        'A839211', 'G849202', 'H559301', 'E001234',
+        'M889123', 'W-JS001', 'W-BT200', 'AIR-HR44'
+    ];
+    const seedCars = await prisma.car.findMany({
+        where: { licensePlate: { in: seedPlates } },
+        select: { id: true }
+    });
+    const seedCarIds = seedCars.map(c => c.id);
+
+    if (seedCarIds.length > 0) {
+        // Borrar reservas que apuntan a los carros del seed (evita violación de FK)
+        await prisma.booking.deleteMany({ where: { carId: { in: seedCarIds } } });
+        // Ahora sí, borrar los carros del seed
+        await prisma.car.deleteMany({ where: { id: { in: seedCarIds } } });
+    }
 
     const cars = [
         // --- LAND ---
