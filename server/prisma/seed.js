@@ -82,7 +82,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'HYBRID',
-            image: 'https://loremflickr.com/800/600/toyota,corolla,car/all?lock=1'
+            image: 'https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=800&q=80'
         },
         {
             brand: 'Land Rover', model: 'Defender', year: 2023, type: 'Jeepeta / SUV',
@@ -106,7 +106,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'GASOLINE',
-            image: 'https://loremflickr.com/800/600/honda,civic,car/all?lock=3'
+            image: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&q=80'
         },
         {
             brand: 'Tesla', model: 'Model 3', year: 2024, type: 'Eléctrico',
@@ -118,7 +118,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'ELECTRIC',
-            image: 'https://loremflickr.com/800/600/tesla,electric,car/all?lock=4'
+            image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80'
         },
         {
             brand: 'Yamaha', model: 'MT-07', year: 2023, type: 'Motocicleta',
@@ -130,7 +130,7 @@ async function main() {
             capacity: 2, requiresOperatorLevel: 'MOTORCYCLE_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'MOTORCYCLE', energyType: 'GASOLINE',
-            image: 'https://loremflickr.com/800/600/yamaha,motorcycle/all?lock=5'
+            image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&q=80'
         },
         // --- WATER ---
         {
@@ -155,7 +155,7 @@ async function main() {
             capacity: 10, requiresOperatorLevel: 'BOAT_CAPTAIN_LICENSE',
             safetyProfile: 'water_recreational',
             domain: 'WATER', category: 'BOAT', energyType: 'GASOLINE',
-            image: 'https://loremflickr.com/800/600/speedboat,yacht,boat/all?lock=7'
+            image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&q=80'
         },
         // --- AIR ---
         {
