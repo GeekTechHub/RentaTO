@@ -10,12 +10,12 @@ async function main() {
     // ============================================
     const admin = await prisma.user.upsert({
         where: { email: 'gabrielabreulio@gmail.com' },
-        update: { role: 'OWNER', kycStatus: 'VERIFIED', trustScore: 100 },
+        update: { role: 'ADMIN', kycStatus: 'VERIFIED', trustScore: 100 },
         create: {
             email: 'gabrielabreulio@gmail.com',
             password: await bcrypt.hash('admin123', 12),
             name: 'Gabriel Abreu',
-            role: 'OWNER',
+            role: 'ADMIN',
             kycStatus: 'VERIFIED',
             trustScore: 100
         }
@@ -66,7 +66,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'HYBRID',
-            image: 'https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/toyota,corolla,car/all?lock=1'
         },
         {
             brand: 'Land Rover', model: 'Defender', year: 2023, type: 'Jeepeta / SUV',
@@ -78,7 +78,7 @@ async function main() {
             capacity: 7, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SUV', energyType: 'DIESEL',
-            image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/land,rover,defender,suv/all?lock=2'
         },
         {
             brand: 'Honda', model: 'Civic', year: 2021, type: 'Sedan',
@@ -90,7 +90,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'GASOLINE',
-            image: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/honda,civic,car/all?lock=3'
         },
         {
             brand: 'Tesla', model: 'Model 3', year: 2024, type: 'Eléctrico',
@@ -102,7 +102,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'ELECTRIC',
-            image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/tesla,electric,car/all?lock=4'
         },
         {
             brand: 'Yamaha', model: 'MT-07', year: 2023, type: 'Motocicleta',
@@ -114,7 +114,7 @@ async function main() {
             capacity: 2, requiresOperatorLevel: 'MOTORCYCLE_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'MOTORCYCLE', energyType: 'GASOLINE',
-            image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/yamaha,motorcycle/all?lock=5'
         },
         // --- WATER ---
         {
@@ -127,7 +127,7 @@ async function main() {
             capacity: 2, requiresOperatorLevel: 'WATER_LICENSE',
             safetyProfile: 'water_recreational',
             domain: 'WATER', category: 'JETSKI', energyType: 'GASOLINE',
-            image: 'https://images.unsplash.com/photo-1597466599360-3b9775841aec?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/jetski,seadoo,watercraft/all?lock=6'
         },
         {
             brand: 'Yamaha', model: '242X', year: 2022, type: 'Lancha',
@@ -139,7 +139,7 @@ async function main() {
             capacity: 10, requiresOperatorLevel: 'BOAT_CAPTAIN_LICENSE',
             safetyProfile: 'water_recreational',
             domain: 'WATER', category: 'BOAT', energyType: 'GASOLINE',
-            image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/speedboat,yacht,boat/all?lock=7'
         },
         // --- AIR ---
         {
@@ -152,7 +152,7 @@ async function main() {
             capacity: 4, requiresOperatorLevel: 'COMMERCIAL_PILOT',
             safetyProfile: 'air_certified',
             domain: 'AIR', category: 'HELICOPTER', energyType: 'AVGAS',
-            image: 'https://images.unsplash.com/photo-1583541432904-9a76d8f86fc6?w=800&q=80'
+            image: 'https://loremflickr.com/800/600/helicopter,aircraft/all?lock=8'
         }
     ];
 

@@ -5,12 +5,12 @@ const API_BASE = window.RENTARD_API_BASE || '/api';
 let cars = [];
 let currentUser = JSON.parse(localStorage.getItem('rentard_user')) || null;
 let token = localStorage.getItem('rentard_token') || null;
-let currentDomain = 'LAND';
+let currentDomain = 'ALL';
 let activeCarId = null; // Store for modal operations
 
 window.setDomain = (domain) => {
   currentDomain = domain;
-  ['land', 'water', 'air'].forEach(d => {
+  ['all', 'land', 'water', 'air'].forEach(d => {
     const el = $(`domain-${d}`);
     if (el) el.classList.toggle('active', d.toUpperCase() === domain);
   });
@@ -44,6 +44,7 @@ const updateAuthUI = () => {
   }
 };
 
+const domainLabel = (d) => ({ LAND: 'Terrestre', WATER: 'Acuático', AIR: 'Aéreo' }[d] || d);
 const formatCurrency = (val) => {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', maximumFractionDigits: 0 }).format(val);
 };
@@ -53,12 +54,13 @@ const formatCurrency = (val) => {
 // ==========================
 const fetchCars = async (q = '', loc = '', type = '') => {
   try {
-    const params = new URLSearchParams({ q, loc, type, domain: currentDomain });
+    const params = new URLSearchParams({ q, loc, type });
+    if (currentDomain && currentDomain !== 'ALL') params.set('domain', currentDomain);
     const res = await fetch(`${API_BASE}/cars?${params}`);
     cars = await res.json();
     renderListings(cars, 'listings');
   } catch (err) {
-    showToast('Fallo en conexión con servidores universales.');
+    showToast('No se pudo conectar con el servidor. Intenta de nuevo.');
   }
 };
 
@@ -96,8 +98,8 @@ function renderListings(list, containerId) {
     el.className = "car";
 
     const badgeVerify = c.verified || c.dnaStatus === 'VERIFIED'
-      ? `<span class="badge2 ok">Verificado Legalmente</span>`
-      : `<span class="badge2 warn">Pendiente Verificación</span>`;
+      ? `<span class="badge2 ok">Verificado</span>`
+      : `<span class="badge2 warn">En revisión</span>`;
 
     el.innerHTML = `
         <div class="img" style="background-image: url('${c.image || 'https://images.unsplash.com/photo-1542362567-b05503f35259'}')"></div>
@@ -105,7 +107,7 @@ function renderListings(list, containerId) {
           <div class="row">
             <div>
               <h3>${c.brand} ${c.model} (${c.year})</h3>
-              <div class="meta">${c.domain} • ${c.category || c.type} • Ubicación Cero: ${c.location}</div>
+              <div class="meta">${domainLabel(c.domain)} • ${c.category || c.type} • ${c.location}</div>
             </div>
             <div class="price">${formatCurrency(c.price)}/día</div>
           </div>
@@ -114,10 +116,10 @@ function renderListings(list, containerId) {
             <span class="badge2">Deposit: ${formatCurrency(c.deposit)}</span>
             <span class="badge2">Cualquier Año</span>
           </div>
-          <div class="meta" style="margin-top:8px">${c.note || 'Asset DNA Registrado en Ledger WORM.'}</div>
+          <div class="meta" style="margin-top:8px">${c.note || 'Sin descripción.'}</div>
         </div>
         <div class="actions">
-          <button class="btn primary view-btn" data-id="${c.id}">Inspeccionar y Reservar</button>
+          <button class="btn primary view-btn" data-id="${c.id}">Ver y Reservar</button>
         </div>
       `;
     wrap.appendChild(el);
@@ -175,7 +177,7 @@ window.openDetails = (id) => {
   activeCarId = id;
 
   const trustScore = car.owner && car.owner.trustScore ? car.owner.trustScore : 88;
-  $('detailsTitle').textContent = `Mapeo Jurídico: ${car.brand} ${car.model} (${car.year})`;
+  $('detailsTitle').textContent = `${car.brand} ${car.model} (${car.year})`;
 
   $('detailsContent').innerHTML = `
         <div class="modal-grid">
@@ -193,7 +195,7 @@ window.openDetails = (id) => {
                     <b>Perfil Seguridad:</b> <span class="badge2 ok" style="padding: 2px 6px; font-size: 10px;">${car.safetyProfile || 'land_standard'}</span><br/>
                     <br/>
                     <b>Propietario / Trust:</b> ${car.owner ? car.owner.name : 'VVIP'} (Score: ${trustScore}%)<br/>
-                    <b>Ubicación Cero:</b> ${car.location}<br/>
+                    <b>Ubicación:</b> ${car.location}<br/>
                     <b>Tarifa Diaria:</b> ${formatCurrency(car.price)}/día<br/>
                     <b>Póliza Smart Escrow:</b> ${formatCurrency(car.deposit)}<br/>
                     <br/>
@@ -220,13 +222,13 @@ window.openDetails = (id) => {
                         </label>
                     </div>
                     <div class="field span2">
-                        <button class="btn primary" id="bkConfirm" type="button" onclick="reserveCar()">Firma de Escrow Neural</button>
+                        <button class="btn primary" id="bkConfirm" type="button" onclick="reserveCar()">Reservar ahora</button>
                     </div>
                 </div>
             </div>
             
             <div class="panel" style="grid-column: span 2;">
-                <h4>Comunicaciones Neurales con Propietario</h4>
+                <h4>Chat con el propietario</h4>
                 <div class="chatbox">
                     <div class="chatlog" id="chatMessages" aria-label="Mensajes">Esperando sincronización...</div>
                     <div style="display:flex; gap:8px;">
@@ -324,24 +326,26 @@ window.openPublish = () => {
         <div class="panel">
             <div class="form grid-form">
                 <div class="field span2 text-center" style="margin-bottom:10px;">
-                    <div style="font-weight:700; font-size:1.1rem; color:var(--primary);">Taxonomía Múltiple Soportada</div>
+                    <div style="font-weight:700; font-size:1.1rem; color:var(--primary);">Publica tu vehículo</div>
+                    <div class="small" style="color:var(--muted,#888);">Carros, motores, lanchas, jetskis y más. Cualquier año.</div>
                 </div>
                 <div class="field">
-                    <label>Dominio de Activo</label>
+                    <label>Tipo de vehículo</label>
                     <select id="pDom" onchange="updatePubCatsAndDefaults()">
-                        <option value="LAND">Terrestre</option>
-                        <option value="WATER">Acuático</option>
-                        <option value="AIR">Aéreo</option>
+                        <option value="LAND">Terrestre (carro, motor, jeepeta...)</option>
+                        <option value="WATER">Acuático (lancha, jetski, yate...)</option>
+                        <option value="AIR">Aéreo (avioneta, helicóptero...)</option>
                     </select>
                 </div>
                 <div class="field">
-                    <label>Tipo de Energía</label>
+                    <label>Combustible</label>
                     <select id="pEnergy">
-                        <option value="GASOLINE">Gasolina / Automotriz</option>
-                        <option value="DIESEL">Gasoil / Marino</option>
-                        <option value="ELECTRIC">Eléctrico Pura</option>
-                        <option value="JET_FUEL">Jet Fuel / Aeronáutico</option>
-                        <option value="HUMAN">Humano (Tracción)</option>
+                        <option value="GASOLINE">Gasolina</option>
+                        <option value="DIESEL">Gasoil / Diesel</option>
+                        <option value="ELECTRIC">Eléctrico</option>
+                        <option value="HYBRID">Híbrido</option>
+                        <option value="JET_FUEL">Combustible de avión</option>
+                        <option value="HUMAN">Sin motor (pedal / remo)</option>
                     </select>
                 </div>
                 <div class="field">
@@ -349,81 +353,83 @@ window.openPublish = () => {
                     <select id="pCat"></select>
                 </div>
                 <div class="field">
-                    <label>Transmisión</label>
-                    <select id="pTrans">
-                        <option value="AUTOMATIC">Automático</option>
-                        <option value="MANUAL">Manual</option>
-                        <option value="DIRECT_DRIVE">Direct Drive</option>
-                        <option value="CVT">CVT</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Capacidad (Personas)</label>
-                    <input type="number" id="pCapacity" min="1" max="100" value="5" />
+                    <label>Capacidad (personas)</label>
+                    <input id="pCapacity" type="number" value="5" placeholder="¿Cuántas personas caben?" />
                 </div>
                 <div class="field">
                     <label>Año</label>
-                    <input type="number" id="pYear" min="1950" max="2100" placeholder="Ej: 2008" />
+                    <input id="pYear" type="number" placeholder="Ej: 2018" />
                 </div>
                 <div class="field">
                     <label>Marca</label>
-                    <input id="pBrand" placeholder="Ej: Toyota / SeaRay / Cessna" />
+                    <input id="pBrand" placeholder="Ej: Toyota, Honda, Yamaha" />
                 </div>
                 <div class="field">
                     <label>Modelo</label>
-                    <input id="pModel" placeholder="Ej: Corolla / Bowrider" />
+                    <input id="pModel" placeholder="Ej: Corolla, Civic" />
                 </div>
                 <div class="field">
-                    <label>Tarifa Diaria (RD$)</label>
-                    <input id="pPrice" type="number" placeholder="Tarifa Base" />
-                </div>
-                <div class="field">
-                    <label>Póliza Escrow (RD$)</label>
-                    <input id="pDeposit" type="number" placeholder="Garantía / Retención" />
-                </div>
-                <div class="field">
-                    <label>Identificación de Placa/Registro</label>
-                    <input id="pPlate" placeholder="Ej: A839211 o Reg. ID" />
-                </div>
-                <div class="field">
-                    <label>Número de Chasis (VIN/Tail/Hull)</label>
-                    <input id="pChassis" placeholder="Ej: VIN8923KJNSDF901" />
-                </div>
-                <div class="field">
-                    <label>Autonomía Estimada (KM/Millas)</label>
-                    <input type="number" id="pRange" value="500" placeholder="Autonomía de combustible" />
-                </div>
-                <div class="field">
-                    <label>Licencia / Nivel de Operación</label>
-                    <select id="pOperator">
-                        <option value="STANDARD_LICENSE">Licencia Estándar (Categoría 2+)</option>
-                        <option value="CAPTAIN_LICENSE">Licencia de Capitán (Patrón de Yate)</option>
-                        <option value="PILOT_LICENSE">Licencia de Piloto Aviador</option>
-                        <option value="NONE">Sin Requerimiento (Bici/Tracción Humana)</option>
+                    <label>Transmisión</label>
+                    <select id="pTrans">
+                        <option value="AUTOMATIC">Automática</option>
+                        <option value="MANUAL">Mecánica / Sincrónica</option>
                     </select>
                 </div>
                 <div class="field">
-                    <label>Perfil de Seguridad WORM</label>
-                    <select id="pSafety">
-                        <option value="land_standard">Estándar Terrestre (21 puntos)</option>
-                        <option value="water_standard">Inspección de Casco y Salvavidas</option>
-                        <option value="air_standard">Inspección de Aeronavegabilidad (FAA/IDAC)</option>
-                        <option value="micromobility">Seguridad General</option>
-                    </select>
+                    <label>Precio por día (RD$)</label>
+                    <input id="pPrice" type="number" placeholder="Ej: 2500" />
+                </div>
+                <div class="field">
+                    <label>Depósito de garantía (RD$)</label>
+                    <input id="pDeposit" type="number" placeholder="Se devuelve al final si todo va bien" />
                 </div>
                 <div class="field span2">
-                    <label>Ubicación Cero (Base de Extracción)</label>
+                    <label>Foto del vehículo (enlace de imagen)</label>
+                    <input id="pImage" type="url" placeholder="Pega aquí el enlace de una foto (https://...)" oninput="previewImage()" />
+                    <div class="small" style="color:var(--muted,#888); margin-top:4px;">
+                        Por ahora pega un enlace de foto. Pronto podrás subirla directo desde tu teléfono.
+                    </div>
+                    <img id="pImagePreview" style="display:none; margin-top:8px; max-width:200px; border-radius:8px;" />
+                </div>
+                <div class="field">
+                    <label>Placa o matrícula</label>
+                    <input id="pPlate" placeholder="Ej: A839211" />
+                </div>
+                <div class="field">
+                    <label>Número de chasis (opcional)</label>
+                    <input id="pChassis" placeholder="Opcional" />
+                </div>
+                <div class="field">
+                    <label>¿Cuántos KM rinde el tanque? (opcional)</label>
+                    <input type="number" id="pRange" value="500" placeholder="Ej: 500" />
+                </div>
+                <div class="field">
+                    <label>Licencia requerida para conducirlo</label>
+                    <select id="pOperator">
+                        <option value="STANDARD_LICENSE">Licencia normal de conducir</option>
+                        <option value="MOTORCYCLE_LICENSE">Licencia de motor</option>
+                        <option value="CAPTAIN_LICENSE">Licencia de capitán/patrón</option>
+                        <option value="PILOT_LICENSE">Licencia de piloto</option>
+                        <option value="NONE">Ninguna (bici, kayak...)</option>
+                    </select>
+                </div>
+                <input type="hidden" id="pSafety" value="land_standard" />
+                <div class="field span2">
+                    <label>¿En qué provincia se entrega?</label>
                     <select id="pLoc">
-                        <option value="">Seleccionar Provincia</option>
+                        <option value="">Selecciona la provincia</option>
                         ${PROVINCES.map(p => `<option value="${p}">${p}</option>`).join('')}
                     </select>
                 </div>
                 <div class="field span2">
-                    <label>Evidencia de Integridad (Notas)</label>
-                    <textarea id="pNote" placeholder="Aceptamos cualquier año, describe la condición de uso para evitar Disputas Jurídicas."></textarea>
+                    <label>Descripción</label>
+                    <textarea id="pNote" placeholder="Cuéntale a la gente sobre tu vehículo: estado, qué incluye, condiciones de uso..."></textarea>
                 </div>
                 <div class="field span2">
-                    <button class="btn primary" style="width: 100%;" onclick="publishCar()">Inyectar Asset a RENTARD</button>
+                    <div class="small" style="color:var(--muted,#888); margin-bottom:8px; text-align:center;">
+                        Tu publicación pasará por una revisión rápida de nuestro equipo antes de aparecer en el catálogo.
+                    </div>
+                    <button class="btn primary" style="width: 100%;" onclick="publishCar()">Publicar mi vehículo</button>
                 </div>
             </div>
         </div>`;
@@ -536,6 +542,19 @@ const doLogin = async (email, pass) => {
 // Backward-compat: keep handleLogin working if referenced elsewhere
 window.handleLogin = () => doLogin($('authEmail').value.trim(), $('authPass').value);
 
+window.previewImage = () => {
+  const url = $('pImage').value.trim();
+  const preview = $('pImagePreview');
+  if (!preview) return;
+  if (url && /^https?:\/\//.test(url)) {
+    preview.src = url;
+    preview.style.display = 'block';
+    preview.onerror = () => { preview.style.display = 'none'; };
+  } else {
+    preview.style.display = 'none';
+  }
+};
+
 window.publishCar = async () => {
   const payload = {
     domain: $('pDom').value,
@@ -549,6 +568,7 @@ window.publishCar = async () => {
     deposit: $('pDeposit').value,
     location: $('pLoc').value,
     note: $('pNote').value,
+    image: $('pImage') ? $('pImage').value.trim() : '',
     transmission: $('pTrans').value,
     capacity: $('pCapacity').value,
     licensePlate: $('pPlate').value,
@@ -558,7 +578,10 @@ window.publishCar = async () => {
     safetyProfile: $('pSafety').value
   };
 
-  if (!payload.brand || !payload.price) return showToast('Datos Incompletos.');
+  if (!payload.brand || !payload.model) return showToast('Completa la marca y el modelo.');
+  if (!payload.price || Number(payload.price) <= 0) return showToast('Indica un precio por día válido.');
+  if (!payload.year) return showToast('Indica el año del vehículo.');
+  if (!payload.location) return showToast('Selecciona la provincia de entrega.');
 
   try {
     const res = await fetch(`${API_BASE}/cars`, {
@@ -568,13 +591,14 @@ window.publishCar = async () => {
     });
     const data = await res.json();
     if (res.ok) {
-      showToast('¡Activo Universal Sincronizado!');
+      showToast(data.message || 'Tu vehículo fue enviado a revisión.');
       $('publishBackdrop').style.display = 'none';
       fetchCars();
     } else {
-      showToast('Falla Jurídica: ' + data.error);
+      const msg = data.issues ? data.issues.map(i => i.message).join('. ') : (data.error || 'No se pudo publicar.');
+      showToast(msg);
     }
-  } catch (err) { showToast('Server Error'); }
+  } catch (err) { showToast('No se pudo conectar con el servidor.'); }
 };
 
 // ==========================
@@ -605,6 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Basic Hook Ups
   if ($('go')) $('go').onclick = handleSearch;
 
+  if ($('domain-all')) $('domain-all').onclick = () => setDomain('ALL');
   if ($('domain-land')) $('domain-land').onclick = () => setDomain('LAND');
   if ($('domain-water')) $('domain-water').onclick = () => setDomain('WATER');
   if ($('domain-air')) $('domain-air').onclick = () => setDomain('AIR');
@@ -617,6 +642,11 @@ document.addEventListener('DOMContentLoaded', () => {
         openPublish();
       }
     };
+  });
+
+  // Nav "Publicar Vehículo" links → open publish modal (login form if not authed)
+  ['navPublicar', 'navPublicarMobile'].forEach(id => {
+    if ($(id)) $(id).onclick = (e) => { e.preventDefault(); openPublish(); };
   });
 
   if ($('closeDetails')) $('closeDetails').onclick = () => $('detailsBackdrop').style.display = 'none';

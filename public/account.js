@@ -57,6 +57,9 @@
         if (!token()) { showToastSafe('Inicia sesión primero.'); return; }
         const backdrop = $('accountBackdrop');
         if (!backdrop) return;
+        // Show admin tab only for ADMIN users
+        const adminTab = $('adminTabBtn');
+        if (adminTab) adminTab.style.display = (user()?.role === 'ADMIN') ? '' : 'none';
         backdrop.style.display = 'flex';
         switchAccountTab('bookings');
     };
@@ -71,6 +74,7 @@
         if (tab === 'bookings') loadMyBookings();
         else if (tab === 'cars') loadMyCars();
         else if (tab === 'owner-bookings') loadOwnerBookings();
+        else if (tab === 'admin') loadAdminPending();
     };
 
     // ============================================
@@ -202,6 +206,69 @@
         } catch (e) {
             $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${e.message}</div>`;
         }
+    };
+
+    // ============================================
+    // Admin: vehículos pendientes de aprobación
+    // ============================================
+    const loadAdminPending = async () => {
+        try {
+            const cars = await apiCall('/cars/admin/pending');
+            const content = $('accountContent');
+            if (!cars.length) {
+                content.innerHTML = `<div style="padding:30px; text-align:center; color: var(--muted, #888);">
+                    No hay vehículos pendientes de revisión. Todo al día.
+                </div>`;
+                return;
+            }
+            content.innerHTML = `<div class="small" style="margin-bottom:12px; color:var(--muted,#888);">
+                ${cars.length} vehículo(s) esperando aprobación:</div>` + cars.map(c => `
+                <div class="card" style="padding:14px; margin-bottom:12px;">
+                    <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                        <div style="width:100px; height:70px; background:url('${c.image || ''}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
+                        <div style="flex:1; min-width:200px;">
+                            <h4 style="margin:0 0 4px;">${c.brand} ${c.model} (${c.year})</h4>
+                            <div class="small" style="color:var(--muted,#888);">
+                                ${c.location} · ${c.domain} · ${c.category} · ${fmtCurrency(c.price)}/día
+                            </div>
+                            <div class="small" style="margin-top:4px;">
+                                Publicado por: <b>${c.owner?.name || '—'}</b> (${c.owner?.email || ''})
+                            </div>
+                            <div class="small" style="margin-top:4px;">${c.note || 'Sin descripción.'}</div>
+                            <div class="small" style="margin-top:4px;">
+                                ${c.dnaStatus === 'REJECTED' ? '<span class="badge2 warn">Rechazado antes</span>' : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-direction:column;">
+                            <button class="btn primary" onclick="approveCar('${c.id}')">✓ Aprobar</button>
+                            <button class="btn" onclick="rejectCar('${c.id}')">✕ Rechazar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${e.message}</div>`;
+        }
+    };
+
+    window.approveCar = async (id) => {
+        try {
+            await apiCall(`/cars/${id}/approve`, { method: 'POST' });
+            showToastSafe('Vehículo aprobado y publicado.');
+            switchAccountTab('admin');
+        } catch (e) { showToastSafe('Error: ' + e.message); }
+    };
+
+    window.rejectCar = async (id) => {
+        const reason = prompt('Motivo del rechazo (opcional):') || '';
+        try {
+            await apiCall(`/cars/${id}/reject`, {
+                method: 'POST',
+                body: JSON.stringify({ reason })
+            });
+            showToastSafe('Vehículo rechazado.');
+            switchAccountTab('admin');
+        } catch (e) { showToastSafe('Error: ' + e.message); }
     };
 
     // ============================================

@@ -31,8 +31,8 @@
           <ul>
             <li><a href="#como">Cómo funciona</a></li>
             <li><a href="#vehiculos">Directorio de Vehículos</a></li>
-            <li><a href="#publicar">Publicar Vehículo</a></li>
-            <li><a href="#seguridad">Seguridad</a></li>
+            <li><a href="#" id="navPublicar">Publicar Vehículo</a></li>
+            <li><a href="#como">Seguridad</a></li>
           </ul>
         </nav>
 
@@ -49,8 +49,8 @@
         <div style="display:flex; flex-wrap:wrap; gap:8px;">
           <a class="btn" style="box-shadow:none" href="#como">Cómo funciona</a>
           <a class="btn" style="box-shadow:none" href="#vehiculos">Vehículos</a>
-          <a class="btn" style="box-shadow:none" href="#publicar">Publicar</a>
-          <a class="btn" style="box-shadow:none" href="#seguridad">Seguridad</a>
+          <a class="btn" style="box-shadow:none" href="#" id="navPublicarMobile">Publicar</a>
+          <a class="btn" style="box-shadow:none" href="#como">Seguridad</a>
         </div>
       </div>
     </div>
@@ -75,13 +75,14 @@
 
           <div class="hero-cta">
             <a class="btn primary" href="#vehiculos">Explorar Catálogo Universal</a>
-            <button class="btn" id="openPublishHero" type="button">Sintetizar Activo (Publicar)</button>
+            <button class="btn" id="openPublishHero" type="button">Publicar mi vehículo</button>
           </div>
 
           <div class="search" aria-label="Buscador y filtros">
             <!-- Universal Taxonomy Domain Selector -->
             <div class="domain-selector">
-              <button class="domain-btn active" id="domain-land">Terrestre</button>
+              <button class="domain-btn active" id="domain-all">Todos</button>
+              <button class="domain-btn" id="domain-land">Terrestre</button>
               <button class="domain-btn" id="domain-water">Acuático</button>
               <button class="domain-btn" id="domain-air">Aéreo</button>
             </div>
@@ -215,7 +216,7 @@
       <div class="section-head">
         <div>
           <h2>Vehículos disponibles</h2>
-          <p>Filtra y abre el Mapping para reservar o iniciar chat neuronal.</p>
+          <p>Encuentra el vehículo perfecto para tu viaje.</p>
         </div>
       </div>
 
@@ -255,7 +256,7 @@
   <div class="modal-backdrop" id="publishBackdrop" style="display:none;">
     <div class="modal" style="max-width: 600px;">
       <div class="modal-head">
-        <h3 id="publishTitle">Sintetizar Activo Universitario</h3>
+        <h3 id="publishTitle">Publicar vehículo</h3>
         <button class="btn" id="closePublish" type="button">✕ Cerrar</button>
       </div>
       <div class="modal-body" id="publishFormContent">
@@ -276,6 +277,7 @@
           <button class="btn primary tab-btn" data-tab="bookings" type="button" onclick="switchAccountTab('bookings')">Mis Reservas</button>
           <button class="btn tab-btn" data-tab="cars" type="button" onclick="switchAccountTab('cars')">Mis Vehículos</button>
           <button class="btn tab-btn" data-tab="owner-bookings" type="button" onclick="switchAccountTab('owner-bookings')">Reservas Recibidas</button>
+          <button class="btn tab-btn" id="adminTabBtn" data-tab="admin" type="button" onclick="switchAccountTab('admin')" style="display:none;">Panel Admin</button>
         </div>
         <div id="accountContent" style="margin-top: 20px; max-height: 60vh; overflow-y: auto;"></div>
       </div>
