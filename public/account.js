@@ -87,17 +87,46 @@
     // ============================================
     // Mis Reservas (as renter)
     // ============================================
+    const kycBannerHtml = (kyc) => {
+        if (!kyc || kyc.kycStatus === 'VERIFIED') return '';
+        if (kyc.kycStatus === 'IN_REVIEW') {
+            return `<div class="card" style="padding:12px; margin-bottom:14px; background:rgba(255,180,0,0.08);">
+                <b>Verificación en revisión</b>
+                <div class="small" style="color:var(--muted,#888); margin-top:4px;">
+                    Enviaste tus documentos. Te avisaremos cuando un administrador los apruebe.
+                </div>
+            </div>`;
+        }
+        const reasonLine = kyc.kycStatus === 'REJECTED' && kyc.kycRejectReason
+            ? `<div class="small" style="color:var(--warn,#f80); margin-top:6px;">Motivo: ${esc(kyc.kycRejectReason)}</div>` : '';
+        const cta = kyc.kycStatus === 'REJECTED' ? 'Volver a enviar' : 'Verificar mi identidad';
+        return `<div class="card" style="padding:12px; margin-bottom:14px; background:rgba(80,160,255,0.08);">
+            <b>${kyc.kycStatus === 'REJECTED' ? 'Verificación rechazada' : 'Verifica tu identidad'}</b>
+            <div class="small" style="color:var(--muted,#888); margin-top:4px;">
+                Sube tu cédula y una selfie para generar confianza. Los dueños prefieren rentar a usuarios verificados.
+            </div>
+            ${reasonLine}
+            <button class="btn primary" style="margin-top:10px;" onclick="window._openKycForm()">${cta}</button>
+        </div>`;
+    };
+
     const loadMyBookings = async () => {
         try {
-            const bookings = await apiCall('/bookings/me');
+            // Fetch KYC + bookings in parallel
+            const [kyc, bookings] = await Promise.all([
+                apiCall('/kyc/me').catch(() => null),
+                apiCall('/bookings/me')
+            ]);
             const content = $('accountContent');
+            const banner = kycBannerHtml(kyc);
+
             if (!bookings.length) {
-                content.innerHTML = `<div style="padding:30px; text-align:center; color: var(--muted, #888);">
+                content.innerHTML = banner + `<div style="padding:30px; text-align:center; color: var(--muted, #888);">
                     Aún no tienes reservas. Explora el catálogo y reserva tu primer vehículo.
                 </div>`;
                 return;
             }
-            content.innerHTML = bookings.map(b => `
+            content.innerHTML = banner + bookings.map(b => `
                 <div class="card" style="padding:14px; margin-bottom:12px;">
                     <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
                         <div style="width:100px; height:70px; background:url('${esc(b.car.image || '')}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
@@ -117,6 +146,9 @@
                         </div>
                         <div style="display:flex; gap:6px; flex-direction:column;">
                             <button class="btn" onclick="openBookingChat('${b.id}', 'bookings')">💬 Chat</button>
+                            ${b.status === 'COMPLETED'
+                                ? `<button class="btn primary" onclick="window._openReviewForm('${b.id}', '${esc(b.car.brand)} ${esc(b.car.model)}')">★ Dejar reseña</button>`
+                                : ''}
                             ${['PENDING', 'CONFIRMED'].includes(b.status)
                                 ? `<button class="btn" onclick="cancelBooking('${b.id}')">Cancelar</button>
                                    <button class="btn primary" onclick="completeBooking('${b.id}')">Marcar completada</button>`
@@ -461,20 +493,21 @@
     };
 
     // ============================================
-    // Admin: vehículos pendientes de aprobación
+    // Admin: vehículos pendientes + KYC pendiente
     // ============================================
     const loadAdminPending = async () => {
         try {
-            const cars = await apiCall('/cars/admin/pending');
+            const [cars, kycPending] = await Promise.all([
+                apiCall('/cars/admin/pending').catch(() => []),
+                apiCall('/kyc/pending').catch(() => [])
+            ]);
             const content = $('accountContent');
-            if (!cars.length) {
-                content.innerHTML = `<div style="padding:30px; text-align:center; color: var(--muted, #888);">
-                    No hay vehículos pendientes de revisión. Todo al día.
-                </div>`;
-                return;
-            }
-            content.innerHTML = `<div class="small" style="margin-bottom:12px; color:var(--muted,#888);">
-                ${cars.length} vehículo(s) esperando aprobación:</div>` + cars.map(c => `
+
+            // Section 1: Vehicles
+            const carsBlock = !cars.length
+                ? `<div style="padding:20px; text-align:center; color: var(--muted, #888);">No hay vehículos pendientes.</div>`
+                : `<div class="small" style="margin-bottom:12px; color:var(--muted,#888);">
+                    ${cars.length} vehículo(s) esperando aprobación:</div>` + cars.map(c => `
                 <div class="card" style="padding:14px; margin-bottom:12px;">
                     <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
                         <div style="width:100px; height:70px; background:url('${esc(c.image || '')}') center/cover; border-radius:8px; flex-shrink:0; background-color:#222;"></div>
@@ -498,8 +531,224 @@
                     </div>
                 </div>
             `).join('');
+
+            // Section 2: KYC
+            const kycBlock = !kycPending.length
+                ? `<div style="padding:20px; text-align:center; color: var(--muted, #888);">No hay verificaciones pendientes.</div>`
+                : `<div class="small" style="margin-bottom:12px; color:var(--muted,#888);">
+                    ${kycPending.length} verificación(es) esperando revisión:</div>` + kycPending.map(u => `
+                <div class="card" style="padding:14px; margin-bottom:12px;">
+                    <div style="margin-bottom:10px;">
+                        <h4 style="margin:0;">${esc(u.name)} <span class="small" style="color:var(--muted,#888);">· ${esc(u.email)} · ${esc(u.role)}</span></h4>
+                        <div class="small" style="color:var(--muted,#888);">Enviado: ${u.kycSubmittedAt ? fmtDate(u.kycSubmittedAt) : '—'}</div>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                        ${u.kycCedulaFrontUrl ? `<div><div class="small">Cédula frente</div><a href="${esc(u.kycCedulaFrontUrl)}" target="_blank"><img src="${esc(u.kycCedulaFrontUrl)}" style="height:120px; border-radius:6px; background:#222;" /></a></div>` : ''}
+                        ${u.kycCedulaBackUrl ? `<div><div class="small">Cédula reverso</div><a href="${esc(u.kycCedulaBackUrl)}" target="_blank"><img src="${esc(u.kycCedulaBackUrl)}" style="height:120px; border-radius:6px; background:#222;" /></a></div>` : ''}
+                        ${u.kycSelfieUrl ? `<div><div class="small">Selfie</div><a href="${esc(u.kycSelfieUrl)}" target="_blank"><img src="${esc(u.kycSelfieUrl)}" style="height:120px; border-radius:6px; background:#222;" /></a></div>` : ''}
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn primary" onclick="window._approveKyc('${u.id}')">✓ Verificar</button>
+                        <button class="btn" onclick="window._rejectKyc('${u.id}')">✕ Rechazar</button>
+                    </div>
+                </div>
+            `).join('');
+
+            content.innerHTML = `
+                <div style="display:flex; gap:8px; margin-bottom:14px;">
+                    <button class="btn primary" id="_admSubVehicles" onclick="window._showAdmSub('vehicles')">Vehículos (${cars.length})</button>
+                    <button class="btn" id="_admSubKyc" onclick="window._showAdmSub('kyc')">Verificaciones (${kycPending.length})</button>
+                </div>
+                <div id="_admSubBody"></div>
+            `;
+            window._admBlocks = { vehicles: carsBlock, kyc: kycBlock };
+            window._showAdmSub('vehicles');
         } catch (e) {
             $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${esc(e.message)}</div>`;
+        }
+    };
+
+    window._showAdmSub = (sub) => {
+        const body = $('_admSubBody');
+        const v = $('_admSubVehicles');
+        const k = $('_admSubKyc');
+        if (v) v.classList.toggle('primary', sub === 'vehicles');
+        if (k) k.classList.toggle('primary', sub === 'kyc');
+        if (body && window._admBlocks) body.innerHTML = window._admBlocks[sub] || '';
+    };
+
+    window._approveKyc = async (userId) => {
+        try {
+            await apiCall(`/kyc/${userId}/approve`, { method: 'POST' });
+            showToastSafe('Usuario verificado.');
+            switchAccountTab('admin');
+        } catch (e) { showToastSafe('Error: ' + e.message); }
+    };
+
+    window._rejectKyc = async (userId) => {
+        const reason = prompt('Motivo del rechazo (le llegará al usuario):') || '';
+        try {
+            await apiCall(`/kyc/${userId}/reject`, {
+                method: 'POST',
+                body: JSON.stringify({ reason })
+            });
+            showToastSafe('Verificación rechazada.');
+            switchAccountTab('admin');
+        } catch (e) { showToastSafe('Error: ' + e.message); }
+    };
+
+    // ============================================
+    // KYC submission form
+    // ============================================
+    window._openKycForm = () => {
+        stopChatPolling();
+        $('accountContent').innerHTML = `
+            <div class="card" style="padding:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="margin:0;">Verifica tu identidad</h3>
+                    <button class="btn" onclick="switchAccountTab('bookings')">← Volver</button>
+                </div>
+                <div class="small" style="color:var(--muted,#888); margin-bottom:14px;">
+                    Sube fotos claras y completas. Asegúrate de que se lean los datos y se vea tu cara en la selfie.
+                </div>
+                <div class="form grid-form">
+                    <div class="field span2">
+                        <label>Cédula — frente</label>
+                        <input type="file" accept="image/*" capture="environment" onchange="window._kycUpload(event,'front')" />
+                        <div class="small" id="_kycFrontHint" style="color:var(--muted,#888); margin-top:4px;">No subida.</div>
+                        <img id="_kycFrontPrev" style="display:none; margin-top:6px; max-height:140px; border-radius:6px;" />
+                    </div>
+                    <div class="field span2">
+                        <label>Cédula — reverso</label>
+                        <input type="file" accept="image/*" capture="environment" onchange="window._kycUpload(event,'back')" />
+                        <div class="small" id="_kycBackHint" style="color:var(--muted,#888); margin-top:4px;">No subida.</div>
+                        <img id="_kycBackPrev" style="display:none; margin-top:6px; max-height:140px; border-radius:6px;" />
+                    </div>
+                    <div class="field span2">
+                        <label>Selfie (sostén tu cédula junto a tu cara)</label>
+                        <input type="file" accept="image/*" capture="user" onchange="window._kycUpload(event,'selfie')" />
+                        <div class="small" id="_kycSelfieHint" style="color:var(--muted,#888); margin-top:4px;">No subida.</div>
+                        <img id="_kycSelfiePrev" style="display:none; margin-top:6px; max-height:140px; border-radius:6px;" />
+                    </div>
+                    <div class="field span2" style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button class="btn" onclick="switchAccountTab('bookings')">Cancelar</button>
+                        <button class="btn primary" onclick="window._submitKyc()">Enviar para revisión</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        window._kycUrls = { front: null, back: null, selfie: null };
+    };
+
+    window._kycUpload = async (event, kind) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const cfg = window.CLOUDINARY_CONFIG;
+        const hint = $(`_kyc${kind === 'front' ? 'Front' : kind === 'back' ? 'Back' : 'Selfie'}Hint`);
+        const prev = $(`_kyc${kind === 'front' ? 'Front' : kind === 'back' ? 'Back' : 'Selfie'}Prev`);
+        if (!cfg || !cfg.cloud || !cfg.preset) {
+            if (hint) hint.innerHTML = '⚠️ Subida no configurada. Avísale al admin.';
+            return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+            if (hint) hint.textContent = 'La imagen pesa más de 8 MB.';
+            return;
+        }
+        try {
+            if (hint) hint.textContent = 'Subiendo...';
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('upload_preset', cfg.preset);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.secure_url) {
+                window._kycUrls[kind] = data.secure_url;
+                if (prev) { prev.src = data.secure_url; prev.style.display = 'block'; }
+                if (hint) hint.textContent = 'Subida ✓';
+            } else throw new Error(data.error?.message || 'Sin URL');
+        } catch (err) {
+            if (hint) hint.textContent = 'Error: ' + err.message;
+        }
+    };
+
+    window._submitKyc = async () => {
+        const urls = window._kycUrls || {};
+        if (!urls.front && !urls.back && !urls.selfie) {
+            return showToastSafe('Sube al menos una foto.');
+        }
+        try {
+            const data = await apiCall('/kyc/submit', {
+                method: 'POST',
+                body: JSON.stringify({
+                    cedulaFrontUrl: urls.front || '',
+                    cedulaBackUrl: urls.back || '',
+                    selfieUrl: urls.selfie || ''
+                })
+            });
+            showToastSafe(data.message || 'Documentos enviados.');
+            switchAccountTab('bookings');
+        } catch (e) {
+            showToastSafe('Error: ' + e.message);
+        }
+    };
+
+    // ============================================
+    // Review form
+    // ============================================
+    window._openReviewForm = (bookingId, carName) => {
+        stopChatPolling();
+        $('accountContent').innerHTML = `
+            <div class="card" style="padding:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="margin:0;">Reseña: ${esc(carName)}</h3>
+                    <button class="btn" onclick="switchAccountTab('bookings')">← Volver</button>
+                </div>
+                <div class="form grid-form">
+                    <div class="field span2">
+                        <label>Tu calificación</label>
+                        <div id="_rvStars" style="font-size:30px; cursor:pointer; user-select:none; letter-spacing:6px;">
+                            <span data-n="1">☆</span><span data-n="2">☆</span><span data-n="3">☆</span><span data-n="4">☆</span><span data-n="5">☆</span>
+                        </div>
+                        <div class="small" id="_rvLabel" style="color:var(--muted,#888); margin-top:4px;">Selecciona de 1 a 5 estrellas</div>
+                    </div>
+                    <div class="field span2">
+                        <label>Comentario (opcional)</label>
+                        <textarea id="_rvComment" rows="4" placeholder="¿Cómo te trataron? ¿El vehículo estaba como esperabas?"></textarea>
+                    </div>
+                    <div class="field span2" style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button class="btn" onclick="switchAccountTab('bookings')">Cancelar</button>
+                        <button class="btn primary" onclick="window._submitReview('${bookingId}')">Publicar reseña</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        window._rvRating = 0;
+        document.querySelectorAll('#_rvStars span').forEach(s => {
+            s.addEventListener('click', () => {
+                const n = Number(s.dataset.n);
+                window._rvRating = n;
+                document.querySelectorAll('#_rvStars span').forEach(x => {
+                    x.textContent = Number(x.dataset.n) <= n ? '★' : '☆';
+                });
+                const labels = ['','Pésimo','Malo','Regular','Bueno','Excelente'];
+                $('_rvLabel').textContent = labels[n] + ' (' + n + '/5)';
+            });
+        });
+    };
+
+    window._submitReview = async (bookingId) => {
+        const rating = window._rvRating || 0;
+        const comment = ($('_rvComment')?.value || '').trim();
+        if (rating < 1) return showToastSafe('Selecciona una calificación.');
+        try {
+            const data = await apiCall('/reviews', {
+                method: 'POST',
+                body: JSON.stringify({ bookingId, rating, comment })
+            });
+            showToastSafe(data.message || 'Reseña publicada.');
+            switchAccountTab('bookings');
+        } catch (e) {
+            showToastSafe('Error: ' + e.message);
         }
     };
 

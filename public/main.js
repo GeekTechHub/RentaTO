@@ -107,6 +107,10 @@ function renderListings(list, containerId) {
       ? `<span class="badge2 ok">Verificado</span>`
       : `<span class="badge2 warn">En revisión</span>`;
 
+    const ratingBadge = (c.reviewCount && c.reviewCount > 0)
+      ? `<span class="badge2">★ ${Number(c.rating).toFixed(1)} (${c.reviewCount})</span>`
+      : `<span class="badge2">Sin reseñas aún</span>`;
+
     el.innerHTML = `
         <div class="img" style="background-image: url('${c.image || 'https://images.unsplash.com/photo-1542362567-b05503f35259'}')"></div>
         <div class="body">
@@ -119,6 +123,7 @@ function renderListings(list, containerId) {
           </div>
           <div class="badges">
             ${badgeVerify}
+            ${ratingBadge}
             <span class="badge2">Depósito: ${formatCurrency(c.deposit)}</span>
             <span class="badge2">Cualquier año</span>
           </div>
@@ -198,6 +203,7 @@ window.openDetails = (id) => {
                     <b>Licencia requerida:</b> ${car.requiresOperatorLevel || 'STANDARD_LICENSE'}<br/>
                     <br/>
                     <b>Dueño:</b> ${car.owner ? car.owner.name : '—'} (Reputación: ${trustScore}%)<br/>
+                    <b>Reseñas:</b> ${car.reviewCount > 0 ? `★ ${Number(car.rating).toFixed(1)} (${car.reviewCount} reseña${car.reviewCount === 1 ? '' : 's'})` : 'Aún sin reseñas'}<br/>
                     <b>Ubicación:</b> ${car.location}<br/>
                     <b>Precio:</b> ${formatCurrency(car.price)}/día<br/>
                     <b>Depósito de garantía:</b> ${formatCurrency(car.deposit)}<br/>

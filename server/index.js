@@ -62,6 +62,8 @@ app.use(express.static(path.join(__dirname, '..')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/cars', require('./routes/cars'));
 app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/kyc', require('./routes/kyc'));
+app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/disputes', require('./routes/disputes'));
 app.use('/api/risk', require('./routes/risk'));

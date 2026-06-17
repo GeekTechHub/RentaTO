@@ -13,12 +13,20 @@ model User {
   password   String
   name       String
   role       String       @default("RENTER") // ADMIN, OWNER, RENTER
-  kycStatus  String       @default("PENDING") // PENDING, VERIFIED, REJECTED
-  trustScore Float        @default(50) // Social DNA Trust Level (0-100)
+  kycStatus  String       @default("PENDING") // PENDING, IN_REVIEW, VERIFIED, REJECTED
+  kycCedulaFrontUrl String?
+  kycCedulaBackUrl  String?
+  kycSelfieUrl      String?
+  kycSubmittedAt    DateTime?
+  kycReviewedAt     DateTime?
+  kycRejectReason   String?
+  trustScore Float        @default(50)
   cars       Car[]
   bookings   Booking[]
   sentMessages Message[]  @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  reviewsAuthored  Review[] @relation("ReviewAuthor")
+  reviewsReceived  Review[] @relation("ReviewTarget")
   createdAt  DateTime     @default(now())
 }
 
@@ -36,14 +44,16 @@ model Car {
   price        Float
   deposit      Float
   rating       Float     @default(0)
+  reviewCount  Int       @default(0)
   trips        Int       @default(0)
   verified     Boolean   @default(false)
-  dnaStatus    String    @default("PENDING")  // PENDING, MAPPED, VERIFIED
+  dnaStatus    String    @default("PENDING")
   note         String?
   image        String?
   ownerId      String
   owner        User      @relation(fields: [ownerId], references: [id])
   bookings     Booking[]
+  reviews      Review[]
   
   requiresOperatorLevel String? // License, Captain, Pilot, Certification
   safetyProfile        String? // land_standard, water_standard, air_standard, micromobility
@@ -68,6 +78,7 @@ model Booking {
   car           Car      @relation(fields: [carId], references: [id])
   messages      Message[]
   contract      Contract?
+  review        Review?
   createdAt     DateTime @default(now())
 }
 
@@ -107,5 +118,20 @@ model Contract {
   content       String   // The forged juridical text
   signedAt      DateTime?
   signatureHash String?  // Neural signature trace
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  rating        Int      // 1..5
+  comment       String?
+  authorId      String
+  author        User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  targetUserId  String
+  targetUser    User     @relation("ReviewTarget", fields: [targetUserId], references: [id])
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id])
   createdAt     DateTime @default(now())
 }
