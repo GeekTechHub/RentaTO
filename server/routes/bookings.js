@@ -5,6 +5,7 @@ const validate = require('../middleware/validate');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { z } = require('zod');
 const { PrismaClient } = require('@prisma/client');
+const mailer = require('../lib/mailer');
 
 const prisma = new PrismaClient();
 
@@ -73,7 +74,13 @@ router.post('/', auth, validate(createBookingSchema), asyncHandler(async (req, r
             totalPrice, depositStatus: 'HELD', status: 'CONFIRMED'
         },
         include: {
-            car: { select: { brand: true, model: true, image: true, location: true } }
+            car: {
+                select: {
+                    brand: true, model: true, image: true, location: true,
+                    owner: { select: { email: true } }
+                }
+            },
+            renter: { select: { name: true } }
         }
     });
 
@@ -90,6 +97,15 @@ router.post('/', auth, validate(createBookingSchema), asyncHandler(async (req, r
         }
     });
 
+    // Notify the owner by email (fire-and-forget; never blocks the response)
+    mailer.notifyNewBooking({
+        ownerEmail: booking.car.owner?.email,
+        renterName: booking.renter?.name || 'Un usuario',
+        carName: `${booking.car.brand} ${booking.car.model}`,
+        startDate: new Date(startDate).toLocaleDateString('es-DO', { day: '2-digit', month: 'short', year: 'numeric' }),
+        endDate: new Date(endDate).toLocaleDateString('es-DO', { day: '2-digit', month: 'short', year: 'numeric' })
+    }).catch(() => {});
+
     let financialBreakdown = null;
     try {
         const CurrencyEngine = require('../engines/CurrencyEngine');
@@ -99,7 +115,7 @@ router.post('/', auth, validate(createBookingSchema), asyncHandler(async (req, r
     } catch (_) { /* optional */ }
 
     res.status(201).json({
-        message: 'Reserva confirmada. Depósito retenido en escrow.',
+        message: 'Reserva confirmada. El depósito queda retenido como garantía.',
         booking, days, totalPrice, financialBreakdown
     });
 }));

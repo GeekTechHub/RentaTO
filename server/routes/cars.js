@@ -35,6 +35,7 @@ const carBaseSchema = z.object({
     transmission: z.enum(['AUTOMATIC', 'MANUAL']).default('AUTOMATIC'),
     licensePlate: z.string().max(20).optional(),
     chassisNumber: z.string().max(50).optional(),
+    contactPhone: z.string().max(30).optional().or(z.literal('')),
     fuelRange: z.coerce.number().int().nonnegative().default(500)
 });
 
@@ -80,7 +81,8 @@ router.get('/', asyncHandler(async (req, res) => {
         include: { owner: { select: { name: true, kycStatus: true, trustScore: true } } },
         orderBy: { createdAt: 'desc' }
     });
-    res.json(cars);
+    // contactPhone is private — only revealed via the paid connection unlock
+    res.json(cars.map(({ contactPhone, ...rest }) => rest));
 }));
 
 // ============================================
@@ -114,7 +116,7 @@ router.get('/recommendations', auth, asyncHandler(async (req, res) => {
             take: 3
         });
     }
-    res.json(recommendations);
+    res.json((recommendations || []).map(({ contactPhone, ...rest }) => rest));
 }));
 
 // ============================================
@@ -140,7 +142,9 @@ router.get('/:id', asyncHandler(async (req, res) => {
         }
     });
     if (!car) return res.status(404).json({ error: 'Vehículo no encontrado' });
-    res.json(car);
+    // contactPhone is private — only revealed via the paid connection unlock
+    const { contactPhone, ...publicCar } = car;
+    res.json(publicCar);
 }));
 
 // ============================================

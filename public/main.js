@@ -239,6 +239,12 @@ window.openDetails = (id) => {
                 </div>
             </div>
             <div class="panel" style="grid-column: span 2;">
+                <h4>Contactar al dueño</h4>
+                <div id="unlockBox">
+                    <div class="small" style="color:var(--muted,#888);">Cargando...</div>
+                </div>
+            </div>
+            <div class="panel" style="grid-column: span 2;">
                 <h4>Reseñas</h4>
                 <div id="carReviews"><div class="small" style="color:var(--muted,#888);">Cargando reseñas...</div></div>
             </div>
@@ -246,8 +252,107 @@ window.openDetails = (id) => {
     `;
 
   loadCarReviews(car.id);
+  loadUnlockBox(car.id);
   $('detailsBackdrop').style.display = "flex";
 };
+
+// ── Connection unlock ($1 via PayPal) ──
+async function loadUnlockBox(carId) {
+  const box = $('unlockBox');
+  if (!box) return;
+  if (!token) {
+    box.innerHTML = `<div class="small" style="color:var(--muted,#888);">Inicia sesión para contactar al dueño.</div>`;
+    return;
+  }
+  const car = cars.find(c => c.id === carId);
+  if (car && currentUser && car.ownerId === currentUser.id) {
+    box.innerHTML = `<div class="small" style="color:var(--muted,#888);">Este vehículo es tuyo.</div>`;
+    return;
+  }
+  try {
+    // Already unlocked?
+    const st = await fetch(`${API_BASE}/payments/unlock-status/${carId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => r.json());
+    if (st.unlocked) {
+      renderUnlockedContact(box, st.contactPhone);
+      return;
+    }
+    // Payment config
+    const cfg = await fetch(`${API_BASE}/payments/config`).then(r => r.json());
+    if (!cfg.enabled || !cfg.clientId) {
+      box.innerHTML = `<div class="small" style="color:var(--muted,#888);">El contacto directo aún no está disponible. Reserva y coordina por el chat.</div>`;
+      return;
+    }
+    box.innerHTML = `
+      <p class="small" style="color:var(--muted,#888);">Desbloquea el teléfono/WhatsApp del dueño por <b>US$1</b> (pago único por este vehículo).</p>
+      <div id="paypalUnlockBtn" style="margin-top:10px; max-width:320px;"></div>
+      <div class="small" id="unlockMsg" style="margin-top:8px;"></div>
+    `;
+    loadPayPalSdk(cfg.clientId, cfg.currency, () => renderPayPalButton(carId));
+  } catch (err) {
+    box.innerHTML = `<div class="small" style="color:var(--muted,#888);">No se pudo cargar el contacto.</div>`;
+  }
+}
+
+function renderUnlockedContact(box, phone) {
+  const clean = (phone || '').replace(/[^\d+]/g, '');
+  const wa = clean ? `https://wa.me/${clean.replace(/^\+/, '')}` : null;
+  box.innerHTML = `
+    <div style="background:rgba(40,180,80,0.1); padding:14px; border-radius:8px;">
+      <div class="small" style="color:var(--ok,#2c2);">✓ Contacto desbloqueado</div>
+      <div style="margin-top:8px; font-size:1.2rem; font-weight:700;">${phone || 'El dueño no registró teléfono'}</div>
+      ${wa ? `<a class="btn primary" href="${wa}" target="_blank" style="margin-top:10px; display:inline-block;">Abrir WhatsApp</a>` : ''}
+    </div>`;
+}
+
+let _paypalSdkLoaded = false;
+function loadPayPalSdk(clientId, currency, onReady) {
+  if (_paypalSdkLoaded && window.paypal) { onReady(); return; }
+  const s = document.createElement('script');
+  s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency || 'USD')}`;
+  s.onload = () => { _paypalSdkLoaded = true; onReady(); };
+  s.onerror = () => { const m = $('unlockMsg'); if (m) m.textContent = 'No se pudo cargar PayPal.'; };
+  document.body.appendChild(s);
+}
+
+function renderPayPalButton(carId) {
+  if (!window.paypal) return;
+  const mount = $('paypalUnlockBtn');
+  if (!mount) return;
+  window.paypal.Buttons({
+    createOrder: async () => {
+      const res = await fetch(`${API_BASE}/payments/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ carId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo crear la orden');
+      return data.orderId;
+    },
+    onApprove: async (data) => {
+      const res = await fetch(`${API_BASE}/payments/capture-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderId: data.orderID, carId })
+      });
+      const out = await res.json();
+      const box = $('unlockBox');
+      if (res.ok) {
+        if (box) renderUnlockedContact(box, out.contactPhone);
+        showToast(out.message || '¡Contacto desbloqueado!');
+      } else {
+        const m = $('unlockMsg');
+        if (m) m.textContent = out.error || 'El pago no se completó.';
+      }
+    },
+    onError: () => {
+      const m = $('unlockMsg');
+      if (m) m.textContent = 'Hubo un problema con PayPal. Intenta de nuevo.';
+    }
+  }).render('#paypalUnlockBtn');
+}
 
 async function loadCarReviews(carId) {
   const box = $('carReviews');
@@ -396,6 +501,13 @@ window.openPublish = () => {
                 <div class="field">
                     <label>Depósito de garantía (RD$)</label>
                     <input id="pDeposit" type="number" placeholder="Se devuelve al final si todo va bien" />
+                </div>
+                <div class="field span2">
+                    <label>Teléfono / WhatsApp de contacto</label>
+                    <input id="pPhone" type="tel" placeholder="Ej: 809-555-1234" />
+                    <div class="small" style="color:var(--muted,#888); margin-top:4px;">
+                        No se muestra públicamente. El rentador lo desbloquea pagando US$1 para contactarte directo.
+                    </div>
                 </div>
                 <div class="field span2">
                     <label>Foto del vehículo</label>
@@ -634,6 +746,7 @@ window.publishCar = async () => {
     capacity: $('pCapacity').value,
     licensePlate: $('pPlate').value,
     chassisNumber: $('pChassis').value,
+    contactPhone: $('pPhone') ? $('pPhone').value.trim() : '',
     fuelRange: $('pRange').value,
     requiresOperatorLevel: $('pOperator').value,
     safetyProfile: $('pSafety').value

@@ -5,6 +5,7 @@ const requireAdmin = require('../middleware/requireAdmin');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { z } = require('zod');
 const { PrismaClient } = require('@prisma/client');
+const mailer = require('../lib/mailer');
 
 const prisma = new PrismaClient();
 
@@ -97,7 +98,7 @@ router.post('/:userId/approve', auth, requireAdmin, asyncHandler(async (req, res
             kycReviewedAt: new Date(),
             kycRejectReason: null
         },
-        select: { id: true, kycStatus: true }
+        select: { id: true, kycStatus: true, email: true, name: true }
     });
     await prisma.auditLog.create({
         data: {
@@ -106,7 +107,8 @@ router.post('/:userId/approve', auth, requireAdmin, asyncHandler(async (req, res
             userId: req.user.id
         }
     });
-    res.json({ message: 'Identidad verificada.', user: u });
+    mailer.notifyKycApproved({ email: u.email, name: u.name }).catch(() => {});
+    res.json({ message: 'Identidad verificada.', user: { id: u.id, kycStatus: u.kycStatus } });
 }));
 
 // ============================================
@@ -121,7 +123,7 @@ router.post('/:userId/reject', auth, requireAdmin, asyncHandler(async (req, res)
             kycReviewedAt: new Date(),
             kycRejectReason: reason || 'Sin motivo especificado'
         },
-        select: { id: true, kycStatus: true, kycRejectReason: true }
+        select: { id: true, kycStatus: true, kycRejectReason: true, email: true, name: true }
     });
     await prisma.auditLog.create({
         data: {
@@ -130,7 +132,8 @@ router.post('/:userId/reject', auth, requireAdmin, asyncHandler(async (req, res)
             userId: req.user.id
         }
     });
-    res.json({ message: 'Verificación rechazada.', user: u });
+    mailer.notifyKycRejected({ email: u.email, name: u.name, reason: u.kycRejectReason }).catch(() => {});
+    res.json({ message: 'Verificación rechazada.', user: { id: u.id, kycStatus: u.kycStatus, kycRejectReason: u.kycRejectReason } });
 }));
 
 module.exports = router;

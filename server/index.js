@@ -64,18 +64,9 @@ app.use('/api/cars', require('./routes/cars'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/kyc', require('./routes/kyc'));
 app.use('/api/reviews', require('./routes/reviews'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/api/disputes', require('./routes/disputes'));
-app.use('/api/risk', require('./routes/risk'));
+app.use('/api/payments', require('./routes/payments'));
 app.use('/api/chat', require('./routes/chat'));
-app.use('/api/contracts', require('./routes/contracts'));
-app.use('/api/oracle', require('./routes/oracle'));
-app.use('/api/logistics', require('./routes/logistics'));
-app.use('/api/assets', require('./routes/assets'));
-app.use('/api/iot', require('./routes/iot'));
-app.use('/api/incidents', require('./routes/incidents'));
-app.use('/api/dao', require('./routes/dao'));
-app.use('/api/singularity', require('./routes/singularity'));
+app.use('/api/admin', require('./routes/admin'));
 
 // --- Health Check ---
 app.get('/api/health', (req, res) => {

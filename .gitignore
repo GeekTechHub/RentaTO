@@ -31,3 +31,12 @@ dist-ssr
 .env
 .env.*
 !server/.env.example
+
+# Capacitor native projects (generated locally; not versioned)
+/android
+/ios
+
+# Android signing — NEVER commit these
+*.keystore
+*.jks
+android/keystore.properties

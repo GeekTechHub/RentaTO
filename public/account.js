@@ -265,6 +265,7 @@
                             <div class="small" id="eImageHint" style="color:var(--muted,#888); margin-top:4px;">Toma una foto o pega un enlace.</div>
                             <img id="eImagePreview" src="${esc(c.image || '')}" style="${c.image ? '' : 'display:none;'} margin-top:8px; max-width:200px; border-radius:8px;" />
                         </div>
+                        <div class="field span2"><label>Teléfono / WhatsApp de contacto</label><input id="ePhone" type="tel" value="${esc(c.contactPhone || '')}" placeholder="Ej: 809-555-1234" /><div class="small" style="color:var(--muted,#888); margin-top:4px;">No se muestra públicamente; el rentador lo desbloquea por US$1.</div></div>
                         <div class="field span2"><label>Descripción</label><textarea id="eNote" rows="3">${esc(c.note || '')}</textarea></div>
                         <div class="field span2" style="display:flex; gap:8px; justify-content:flex-end;">
                             <button class="btn" onclick="switchAccountTab('cars')">Cancelar</button>
@@ -337,6 +338,7 @@
                     deposit: Number($('eDeposit').value),
                     location: $('eLoc').value,
                     image: $('eImage').value.trim(),
+                    contactPhone: ($('ePhone')?.value || '').trim(),
                     note: $('eNote').value.trim()
                 };
                 if (!payload.brand || !payload.model || !payload.price) {

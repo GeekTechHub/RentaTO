@@ -27,6 +27,7 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   reviewsAuthored  Review[] @relation("ReviewAuthor")
   reviewsReceived  Review[] @relation("ReviewTarget")
+  connectionUnlocks ConnectionUnlock[]
   createdAt  DateTime     @default(now())
 }
 
@@ -50,10 +51,12 @@ model Car {
   dnaStatus    String    @default("PENDING")
   note         String?
   image        String?
+  contactPhone String?   // WhatsApp/teléfono del dueño, revelado tras pagar el fee de conexión
   ownerId      String
   owner        User      @relation(fields: [ownerId], references: [id])
   bookings     Booking[]
   reviews      Review[]
+  unlocks      ConnectionUnlock[]
   
   requiresOperatorLevel String? // License, Captain, Pilot, Certification
   safetyProfile        String? // land_standard, water_standard, air_standard, micromobility
@@ -137,4 +140,20 @@ model Review {
   createdAt     DateTime @default(now())
 
   @@unique([bookingId, authorId])
+}
+
+model ConnectionUnlock {
+  id            String   @id @default(uuid())
+  renterId      String
+  renter        User     @relation(fields: [renterId], references: [id])
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id])
+  amount        Float    @default(1)
+  currency      String   @default("USD")
+  provider      String   @default("paypal")
+  providerOrderId String?
+  status        String   @default("PENDING") // PENDING, PAID, FAILED
+  createdAt     DateTime @default(now())
+
+  @@unique([renterId, carId])
 }
