@@ -238,11 +238,43 @@ window.openDetails = (id) => {
                     </div>
                 </div>
             </div>
+            <div class="panel" style="grid-column: span 2;">
+                <h4>Reseñas</h4>
+                <div id="carReviews"><div class="small" style="color:var(--muted,#888);">Cargando reseñas...</div></div>
+            </div>
         </div>
     `;
 
+  loadCarReviews(car.id);
   $('detailsBackdrop').style.display = "flex";
 };
+
+async function loadCarReviews(carId) {
+  const box = $('carReviews');
+  if (!box) return;
+  try {
+    const res = await fetch(`${API_BASE}/reviews/car/${carId}`);
+    const reviews = await res.json();
+    if (!reviews || !reviews.length) {
+      box.innerHTML = `<div class="small" style="color:var(--muted,#888);">Este vehículo aún no tiene reseñas. ¡Sé el primero en rentarlo!</div>`;
+      return;
+    }
+    box.innerHTML = reviews.map(r => {
+      const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+      const date = new Date(r.createdAt).toLocaleDateString('es-DO', { day: '2-digit', month: 'short', year: 'numeric' });
+      return `<div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="display:flex; justify-content:space-between; gap:8px;">
+          <b>${r.author?.name || 'Usuario'}</b>
+          <span style="color:#f5b301;">${stars}</span>
+        </div>
+        <div class="small" style="color:var(--muted,#888); margin-top:2px;">${date}</div>
+        ${r.comment ? `<div style="margin-top:6px;">${r.comment.replace(/[<>]/g, '')}</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch (err) {
+    box.innerHTML = `<div class="small" style="color:var(--muted,#888);">No se pudieron cargar las reseñas.</div>`;
+  }
+}
 
 window.reserveCar = async () => {
   if (!token) return showToast('Inicia sesión primero para reservar.');

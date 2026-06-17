@@ -26,6 +26,15 @@ if [ -z "$CLOUD_NAME" ]; then
     exit 1
 fi
 
+# Rechazar el placeholder literal (error común)
+case "$CLOUD_NAME" in
+    TU_CLOUD_NAME|tu_cloud_name|YOUR_CLOUD_NAME|your_cloud_name)
+        echo "❌ '$CLOUD_NAME' es el texto de ejemplo, no tu Cloud Name real."
+        echo "   Búscalo en: console.cloudinary.com → Dashboard → 'Cloud name' (ej: dor8g1woi)"
+        exit 1
+        ;;
+esac
+
 # Sanity: estamos en la raíz del repo
 if [ ! -f index.html ] || [ ! -d server ]; then
     echo "❌ No veo index.html / server/ en este directorio."

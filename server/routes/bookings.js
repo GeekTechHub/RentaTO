@@ -187,11 +187,16 @@ router.get('/me', auth, asyncHandler(async (req, res) => {
                     image: true, location: true, domain: true,
                     owner: { select: { name: true } }
                 }
-            }
+            },
+            reviews: { select: { id: true, authorId: true, kind: true } }
         },
         orderBy: { createdAt: 'desc' }
     });
-    res.json(bookings);
+    const withFlags = bookings.map(b => ({
+        ...b,
+        iReviewed: b.reviews.some(r => r.authorId === req.user.id)
+    }));
+    res.json(withFlags);
 }));
 
 // GET /api/bookings/owner  (Bookings on cars I own)
@@ -200,11 +205,16 @@ router.get('/owner', auth, asyncHandler(async (req, res) => {
         where: { car: { ownerId: req.user.id } },
         include: {
             car: { select: { id: true, brand: true, model: true, image: true } },
-            renter: { select: { id: true, name: true, email: true, trustScore: true, kycStatus: true } }
+            renter: { select: { id: true, name: true, email: true, trustScore: true, kycStatus: true } },
+            reviews: { select: { id: true, authorId: true, kind: true } }
         },
         orderBy: { createdAt: 'desc' }
     });
-    res.json(bookings);
+    const withFlags = bookings.map(b => ({
+        ...b,
+        iReviewed: b.reviews.some(r => r.authorId === req.user.id)
+    }));
+    res.json(withFlags);
 }));
 
 // GET /api/bookings/:id  (Details)

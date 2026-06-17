@@ -147,7 +147,9 @@
                         <div style="display:flex; gap:6px; flex-direction:column;">
                             <button class="btn" onclick="openBookingChat('${b.id}', 'bookings')">💬 Chat</button>
                             ${b.status === 'COMPLETED'
-                                ? `<button class="btn primary" onclick="window._openReviewForm('${b.id}', '${esc(b.car.brand)} ${esc(b.car.model)}')">★ Dejar reseña</button>`
+                                ? (b.iReviewed
+                                    ? `<span class="badge2 ok" style="text-align:center;">✓ Reseñado</span>`
+                                    : `<button class="btn primary" onclick="window._openReviewForm('${b.id}', '${esc(b.car.brand)} ${esc(b.car.model)}', 'al dueño')">★ Dejar reseña</button>`)
                                 : ''}
                             ${['PENDING', 'CONFIRMED'].includes(b.status)
                                 ? `<button class="btn" onclick="cancelBooking('${b.id}')">Cancelar</button>
@@ -391,6 +393,11 @@
                             <button class="btn" onclick="openBookingChat('${b.id}', 'owner-bookings')">💬 Chat</button>
                             ${['PENDING', 'CONFIRMED'].includes(b.status)
                                 ? `<button class="btn primary" onclick="completeBooking('${b.id}')">Cerrar / completar</button>`
+                                : ''}
+                            ${b.status === 'COMPLETED'
+                                ? (b.iReviewed
+                                    ? `<span class="badge2 ok" style="text-align:center;">✓ Reseñado</span>`
+                                    : `<button class="btn primary" onclick="window._openReviewForm('${b.id}', '${esc(b.renter.name)}', 'al rentador')">★ Calificar rentador</button>`)
                                 : ''}
                         </div>
                     </div>
@@ -695,13 +702,21 @@
     // ============================================
     // Review form
     // ============================================
-    window._openReviewForm = (bookingId, carName) => {
+    window._openReviewForm = (bookingId, subjectName, direction) => {
         stopChatPolling();
+        // direction = 'al dueño' (renter reviewing) or 'al rentador' (owner reviewing)
+        const returnTab = direction === 'al rentador' ? 'owner-bookings' : 'bookings';
+        const heading = direction === 'al rentador'
+            ? `Calificar a ${esc(subjectName)}`
+            : `Reseña: ${esc(subjectName)}`;
+        const placeholder = direction === 'al rentador'
+            ? '¿El rentador fue puntual y cuidó el vehículo?'
+            : '¿Cómo te trataron? ¿El vehículo estaba como esperabas?';
         $('accountContent').innerHTML = `
             <div class="card" style="padding:18px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h3 style="margin:0;">Reseña: ${esc(carName)}</h3>
-                    <button class="btn" onclick="switchAccountTab('bookings')">← Volver</button>
+                    <h3 style="margin:0;">${heading}</h3>
+                    <button class="btn" onclick="switchAccountTab('${returnTab}')">← Volver</button>
                 </div>
                 <div class="form grid-form">
                     <div class="field span2">
@@ -713,11 +728,11 @@
                     </div>
                     <div class="field span2">
                         <label>Comentario (opcional)</label>
-                        <textarea id="_rvComment" rows="4" placeholder="¿Cómo te trataron? ¿El vehículo estaba como esperabas?"></textarea>
+                        <textarea id="_rvComment" rows="4" placeholder="${placeholder}"></textarea>
                     </div>
                     <div class="field span2" style="display:flex; gap:8px; justify-content:flex-end;">
-                        <button class="btn" onclick="switchAccountTab('bookings')">Cancelar</button>
-                        <button class="btn primary" onclick="window._submitReview('${bookingId}')">Publicar reseña</button>
+                        <button class="btn" onclick="switchAccountTab('${returnTab}')">Cancelar</button>
+                        <button class="btn primary" onclick="window._submitReview('${bookingId}', '${returnTab}')">Publicar reseña</button>
                     </div>
                 </div>
             </div>
@@ -736,7 +751,7 @@
         });
     };
 
-    window._submitReview = async (bookingId) => {
+    window._submitReview = async (bookingId, returnTab) => {
         const rating = window._rvRating || 0;
         const comment = ($('_rvComment')?.value || '').trim();
         if (rating < 1) return showToastSafe('Selecciona una calificación.');
@@ -746,7 +761,7 @@
                 body: JSON.stringify({ bookingId, rating, comment })
             });
             showToastSafe(data.message || 'Reseña publicada.');
-            switchAccountTab('bookings');
+            switchAccountTab(returnTab || 'bookings');
         } catch (e) {
             showToastSafe('Error: ' + e.message);
         }
