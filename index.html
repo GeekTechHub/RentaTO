@@ -4,11 +4,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RentaTO | Renta de vehículos entre personas en RD</title>
+  <title>RentaTÓ — Muévete sin límites</title>
   <meta name="description"
-    content="RentaTO: renta y publica vehículos en República Dominicana. Carros, motores, lanchas, jetskis, yates y más — cualquier año, con identidad verificada y reglas claras." />
+    content="RentaTÓ es un marketplace innovador creado para conectar personas que desean rentar cualquier medio de transporte con propietarios o empresas que tienen vehículos disponibles para alquiler." />
+
+  <!-- Favicon (varias resoluciones desde Cloudinary) -->
+  <link rel="icon" type="image/png" sizes="32x32"
+    href="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_32,h_32,f_png/rentato/logo" />
+  <link rel="icon" type="image/png" sizes="192x192"
+    href="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_192,h_192,f_png/rentato/logo" />
+  <link rel="apple-touch-icon"
+    href="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_180,h_180,f_png/rentato/logo" />
+
+  <!-- Open Graph / Twitter (preview al compartir el link) -->
+  <meta property="og:title" content="RentaTÓ — Muévete sin límites" />
+  <meta property="og:description"
+    content="Marketplace para rentar cualquier medio de transporte en República Dominicana, directo con el dueño." />
+  <meta property="og:image"
+    content="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_1200,h_630,b_white,f_jpg/rentato/logo" />
+  <meta property="og:url" content="https://renta-to.vercel.app" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://res.cloudinary.com">
   <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -20,10 +40,12 @@
     <div class="wrap">
       <div class="nav">
         <a class="brand" href="#inicio">
-          <div class="logo" aria-hidden="true"></div>
+          <img class="logo-img"
+            src="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_120,h_120,q_auto,f_auto/rentato/logo"
+            alt="RentaTÓ" width="56" height="56" />
           <div>
-            <h1>RentaTO</h1>
-            <p>Renta de vehículos entre personas • República Dominicana</p>
+            <h1>RentaTÓ</h1>
+            <p>Muévete sin límites</p>
           </div>
         </a>
 
@@ -66,11 +88,12 @@
             <span class="pill">Depósito + evidencia</span>
           </div>
 
-          <h2 class="title">Renta vehículos en RD, <br />directo con el dueño sin importar el año.</h2>
+          <h2 class="title">RentaTÓ<br /><span style="background:linear-gradient(90deg,#ff6a00,#e62525);-webkit-background-clip:text;background-clip:text;color:transparent;">Muévete sin límites</span></h2>
 
           <p class="subtitle">
-            Un marketplace universal donde cualquiera publica su carro, jeepeta, bote o helicóptero y lo renta por día.
-            El año no manda: manda que esté <b>seguro</b>, <b>verificado</b> y con reglas claras.
+            <b>RentaTÓ</b> es un marketplace innovador creado para conectar personas que desean rentar
+            cualquier medio de transporte con propietarios o empresas que tienen vehículos disponibles
+            para alquiler.
           </p>
 
           <div class="hero-cta">
@@ -242,7 +265,7 @@
   <footer>
     <div class="wrap">
       <div class="foot">
-        <div>© <span id="year"></span> RentaTO — Renta de vehículos entre personas en RD.</div>
+        <div>© <span id="year"></span> RentaTÓ — Muévete sin límites.</div>
         <div class="links">
           <a href="#como">Cómo funciona</a>
           <a href="#vehiculos">Catálogo</a>

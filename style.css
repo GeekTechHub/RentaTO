@@ -78,10 +78,22 @@ header {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 260px;
+  text-decoration: none;
 }
 
+.logo-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, .18);
+  flex-shrink: 0;
+}
+
+/* Legacy .logo (gradiente) preservado por si quedan referencias */
 .logo {
   width: 44px;
   height: 44px;
@@ -106,10 +118,11 @@ header {
 }
 
 .brand h1 {
-  font-size: 15px;
+  font-size: 17px;
   margin: 0;
   line-height: 1.15;
-  letter-spacing: .2px
+  letter-spacing: .3px;
+  font-weight: 800;
 }
 
 .brand p {
