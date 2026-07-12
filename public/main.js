@@ -148,19 +148,15 @@ window.openFeature = (type) => {
   const features = {
     limited: {
       title: 'Cualquier año, sin límite',
-      body: 'En RentaTO el año del vehículo no descalifica. Lo que importa es que esté en buen estado mecánico y estético. Desde clásicos hasta último modelo, cualquier vehículo puede publicarse si cumple con el chequeo básico de seguridad.'
-    },
-    verification: {
-      title: 'Verificación de identidad y del vehículo',
-      body: 'Cada usuario pasa por una verificación de identidad. El vehículo se publica con fotos y datos básicos para que tanto dueño como cliente sepan exactamente lo que se está alquilando.'
-    },
-    escrow: {
-      title: 'Depósito protegido',
-      body: 'El depósito de garantía se retiene durante la renta y se libera al devolver el vehículo en buen estado. Si hay daños o multas, queda como respaldo para resolverlos sin pleitos.'
+      body: `
+        <p>RentaTÓ no descalifica vehículos por su año de fabricación, color, marca, modelo o categoría. La plataforma admite vehículos terrestres, acuáticos y aéreos, sin distinción ni clasismo.</p>
+        <p>Las condiciones de uso, alquiler, entrega, devolución, garantías, depósitos, responsabilidades y cualquier otro término relacionado con la transacción serán establecidos y acordados exclusivamente entre el propietario o representante del vehículo y la persona que lo alquile.</p>
+        <p>RentaTÓ no es parte de dichos acuerdos ni interviene en las negociaciones entre las partes. Su función se limita a facilitar la conexión entre quienes ofrecen vehículos y quienes desean alquilarlos. En consecuencia, las obligaciones y compromisos derivados del alquiler corresponden únicamente a las partes que celebren el acuerdo.</p>
+      `
     },
     neural: {
       title: 'Reseñas y reputación',
-      body: 'Después de cada renta, ambas partes pueden calificarse con estrellas y comentarios. Esa reputación queda visible en el perfil y ayuda a otros usuarios a confiar.'
+      body: '<p>Después de cada renta, ambas partes pueden calificarse con estrellas y comentarios. Esa reputación queda visible en el perfil y ayuda a otros usuarios a confiar.</p>'
     }
   };
 
@@ -170,7 +166,7 @@ window.openFeature = (type) => {
   $('detailsTitle').textContent = feat.title;
   $('detailsContent').innerHTML = `
     <div class="panel">
-      <p style="font-size: 1.1rem; line-height: 1.6; color: var(--muted);">${feat.body}</p>
+      <div style="font-size: 1rem; line-height: 1.6; color: var(--muted);">${feat.body}</div>
       <div style="margin-top: 20px; text-align: center;">
         <button class="btn primary" onclick="$('detailsBackdrop').style.display='none'">Entendido</button>
       </div>
