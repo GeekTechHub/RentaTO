@@ -85,11 +85,18 @@
           <h2 class="title">RentaTÓ</h2>
           <p class="tagline"><em>Muévete sin límites</em></p>
 
-          <p class="subtitle">
-            <b>RentaTÓ</b> es un marketplace innovador creado para conectar personas que desean rentar
-            cualquier medio de transporte, con propietarios o empresas que tienen vehículos disponibles
-            para alquiler.
-          </p>
+          <div class="hero-carousel" id="heroCarousel" aria-label="Galería RentaTÓ">
+            <div class="hc-track" id="hcTrack">
+              <div class="hc-slide" style="background-image:url('https://res.cloudinary.com/dor8g1woi/image/upload/c_pad,w_900,h_500,b_white,f_auto,q_auto/rentato/logo')"></div>
+              <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&h=500&fit=crop')"></div>
+              <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=900&h=500&fit=crop')"></div>
+              <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=900&h=500&fit=crop')"></div>
+              <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=900&h=500&fit=crop')"></div>
+            </div>
+            <button class="hc-arrow hc-prev" id="hcPrev" type="button" aria-label="Anterior">‹</button>
+            <button class="hc-arrow hc-next" id="hcNext" type="button" aria-label="Siguiente">›</button>
+            <div class="hc-dots" id="hcDots" aria-hidden="true"></div>
+          </div>
 
           <div class="hero-cta">
             <a class="btn primary" href="#vehiculos">Ver vehículos disponibles</a>
@@ -177,10 +184,12 @@
 
         <div class="card hero-right">
           <div class="poster">
-            <div class="badge">
-              <span class="flag-mini" aria-hidden="true"></span>
-              <p><strong>Confianza al volante</strong><br />Identidad verificada • Entrega con fotos</p>
-            </div>
+            <button class="brand-logo-btn" id="brandLogoBtn" type="button" aria-label="Reproducir sonido de RentaTÓ">
+              <img
+                src="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_420,h_420,q_auto,f_auto/rentato/logo"
+                alt="RentaTÓ" />
+              <span class="brand-logo-play" aria-hidden="true">►</span>
+            </button>
 
             <div class="stat-grid" aria-label="Indicadores">
               <div class="stat" role="button" onclick="openFeature('limited')" style="cursor:pointer"><b>Sin
@@ -188,6 +197,13 @@
               <div class="stat" role="button" onclick="openFeature('neural')" style="cursor:pointer">
                 <b>Reseñas</b><span>Estrellas y comentarios reales</span>
               </div>
+            </div>
+
+            <div class="info-box">
+              <b>RentaTÓ</b>
+              <p>RentaTÓ es un marketplace innovador creado para conectar personas que desean rentar
+                cualquier medio de transporte, con propietarios o empresas que tienen vehículos
+                disponibles para alquiler.</p>
             </div>
 
             <div class="pill" style="justify-content:center;">
@@ -276,6 +292,28 @@
           <button class="btn tab-btn" id="adminTabBtn" data-tab="admin" type="button" onclick="switchAccountTab('admin')" style="display:none;">Panel Admin</button>
         </div>
         <div id="accountContent" style="margin-top: 20px; max-height: 60vh; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SONIDO / JINGLE DE MARCA -->
+  <div class="modal-backdrop" id="brandAudioBackdrop" style="display:none;">
+    <div class="modal brand-audio-modal">
+      <div class="modal-head">
+        <h3>RentaTÓ — Muévete sin límites</h3>
+        <button class="btn" id="closeBrandAudio" type="button">✕ Cerrar</button>
+      </div>
+      <div style="padding:22px; text-align:center;">
+        <img
+          src="https://res.cloudinary.com/dor8g1woi/image/upload/c_fit,w_360,h_360,q_auto,f_auto/rentato/logo"
+          alt="RentaTÓ" style="max-width:240px; width:100%; border-radius:16px;" />
+        <div style="margin-top:18px;">
+          <audio id="brandAudio" controls preload="none" style="width:100%; max-width:420px;">
+            <source src="https://res.cloudinary.com/dor8g1woi/video/upload/rentato/jingle.mp3" type="audio/mpeg" />
+            Tu navegador no soporta audio.
+          </audio>
+          <div class="small" id="brandAudioMsg" style="color:var(--muted,#888); margin-top:8px;"></div>
+        </div>
       </div>
     </div>
   </div>

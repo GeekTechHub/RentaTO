@@ -857,4 +857,80 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  initHeroCarousel();
+  initBrandAudio();
 });
+
+// ==========================
+// Hero image carousel
+// ==========================
+function initHeroCarousel() {
+  const track = $('hcTrack');
+  const dotsWrap = $('hcDots');
+  if (!track) return;
+  const slides = Array.from(track.children);
+  if (!slides.length) return;
+  let idx = 0;
+  let timer = null;
+
+  // build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'hc-dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => go(i, true));
+    dotsWrap.appendChild(d);
+  });
+
+  const render = () => {
+    track.style.transform = `translateX(-${idx * 100}%)`;
+    dotsWrap.querySelectorAll('.hc-dot').forEach((d, i) =>
+      d.classList.toggle('active', i === idx));
+  };
+  const go = (n, manual) => {
+    idx = (n + slides.length) % slides.length;
+    render();
+    if (manual) restart();
+  };
+  const next = () => go(idx + 1);
+  const prev = () => go(idx - 1);
+  const restart = () => { if (timer) clearInterval(timer); timer = setInterval(next, 4000); };
+
+  if ($('hcNext')) $('hcNext').onclick = () => go(idx + 1, true);
+  if ($('hcPrev')) $('hcPrev').onclick = () => go(idx - 1, true);
+  restart();
+}
+
+// ==========================
+// Brand logo → audio modal
+// ==========================
+function initBrandAudio() {
+  const btn = $('brandLogoBtn');
+  const backdrop = $('brandAudioBackdrop');
+  const audio = $('brandAudio');
+  const msg = $('brandAudioMsg');
+  if (!btn || !backdrop) return;
+
+  const open = () => {
+    backdrop.style.display = 'flex';
+    if (audio) {
+      audio.currentTime = 0;
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {
+        if (msg) msg.textContent = 'Toca ► para reproducir.';
+      });
+      audio.onerror = () => {
+        if (msg) msg.textContent = 'Aún no se ha subido el audio de RentaTÓ.';
+      };
+    }
+  };
+  const close = () => {
+    backdrop.style.display = 'none';
+    if (audio) { audio.pause(); }
+  };
+
+  btn.addEventListener('click', open);
+  if ($('closeBrandAudio')) $('closeBrandAudio').addEventListener('click', close);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+}
