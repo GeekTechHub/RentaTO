@@ -865,28 +865,107 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================
 // Hero image carousel
 // ==========================
+// Logo de RentaTÓ (separador entre categorías)
+const HC_LOGO = 'https://res.cloudinary.com/dor8g1woi/image/upload/c_pad,w_900,h_500,b_white,f_auto,q_auto/rentato/logo';
+const U = (id) => `https://images.unsplash.com/photo-${id}?w=900&h=500&fit=crop&auto=format&q=70`;
+
+// 10 imágenes por categoría (placeholder de Unsplash — reemplazables luego)
+const HC_LAND = [
+  '1503376780353-7e6692767b70', // deportivo rojo
+  '1494976388531-d1058494cdd8', // muscle car
+  '1552519507-da3b142c6e3d',    // clásico azul
+  '1503736334956-4c8f8e92946d', // SUV en montaña
+  '1568605117036-5fe5e7bab0b7', // SUV blanca
+  '1533473359331-0135ef1b58bf', // pickup off-road
+  '1558981806-ec527fa84c39',    // jeep
+  '1558618666-fcd25c85cd64',    // moto deportiva
+  '1449426468159-d96dbf08f19f', // moto en carretera
+  '1471479917193-f00955256257'  // convertible clásico
+].map(U);
+
+const HC_WATER = [
+  '1544551763-46a013bb70d5',    // yate lujo
+  '1505577058444-a3dab90d4253', // velero
+  '1567899378494-47b22a2ae96a', // lancha rápida
+  '1520340356584-f9917d1eea6f', // jetski
+  '1552074284-5e88ef1aef18',    // catamarán
+  '1540946485063-a40da27545f8', // bote en marina
+  '1502933691298-84fc14542831', // yate azul
+  '1473116763249-2faaef81ccda', // barco en costa
+  '1516132006923-6cf348e5dee2', // bote deportivo
+  '1569263979104-865ab7cd8d13'  // lancha atardecer
+].map(U);
+
+const HC_AIR = [
+  '1436491865332-7a61a109cc05', // avión comercial cielo
+  '1540962351504-03099e0a754b', // avioneta privada
+  '1474302770737-173ee21bab63', // jet privado
+  '1583200786218-70a385eeaebd', // helicóptero
+  '1559060017-445fb9722f2a',    // helicóptero vuelo
+  '1569629743817-70d8db6c323b', // jet en pista
+  '1610642372651-fe6e7bc60ba0', // helicóptero moderno
+  '1542296332-2e4473faf563',    // avión pequeño
+  '1464037866556-6812c9d1c72e', // vista aérea avión
+  '1474302770737-173ee21bab63'  // jet (repetido de respaldo)
+].map(U);
+
 function initHeroCarousel() {
   const track = $('hcTrack');
   const dotsWrap = $('hcDots');
+  const catLabel = $('hcCat');
   if (!track) return;
+
+  // Construir la secuencia: logo → 10 terrestres → logo → 10 acuáticos → logo → 10 aéreos
+  const seq = [];
+  const push = (url, cat) => seq.push({ url, cat });
+  push(HC_LOGO, '');
+  HC_LAND.forEach(u => push(u, 'Terrestre'));
+  push(HC_LOGO, '');
+  HC_WATER.forEach(u => push(u, 'Acuático'));
+  push(HC_LOGO, '');
+  HC_AIR.forEach(u => push(u, 'Aéreo'));
+
+  // Render slides
+  track.innerHTML = seq.map(s =>
+    `<div class="hc-slide${s.cat === '' ? ' hc-logo' : ''}" style="background-image:url('${s.url}')"></div>`
+  ).join('');
   const slides = Array.from(track.children);
-  if (!slides.length) return;
+
   let idx = 0;
   let timer = null;
 
-  // build dots
-  slides.forEach((_, i) => {
+  // Dots (uno por slide sería demasiado con 33; ponemos uno por bloque/categoría)
+  dotsWrap.innerHTML = '';
+  const blockStarts = [];
+  seq.forEach((s, i) => { if (s.cat === '') blockStarts.push(i); });
+  blockStarts.push(seq.length);
+  const dotTargets = [0]; // logo inicial
+  // un punto por cada categoría (apunta a la primera imagen del bloque)
+  for (let b = 0; b < blockStarts.length - 1; b++) {
+    const firstImg = blockStarts[b] + 1;
+    if (firstImg < seq.length && seq[firstImg].cat) dotTargets.push(firstImg);
+  }
+  dotTargets.forEach((t) => {
     const d = document.createElement('button');
     d.type = 'button';
-    d.className = 'hc-dot' + (i === 0 ? ' active' : '');
-    d.addEventListener('click', () => go(i, true));
+    d.className = 'hc-dot';
+    d.addEventListener('click', () => go(t, true));
     dotsWrap.appendChild(d);
   });
 
   const render = () => {
     track.style.transform = `translateX(-${idx * 100}%)`;
-    dotsWrap.querySelectorAll('.hc-dot').forEach((d, i) =>
-      d.classList.toggle('active', i === idx));
+    // etiqueta de categoría
+    if (catLabel) {
+      const cat = seq[idx].cat;
+      catLabel.textContent = cat;
+      catLabel.style.opacity = cat ? '1' : '0';
+    }
+    // punto activo = el bloque al que pertenece el slide actual
+    const dots = dotsWrap.querySelectorAll('.hc-dot');
+    let activeDot = 0;
+    dotTargets.forEach((t, i) => { if (idx >= t) activeDot = i; });
+    dots.forEach((d, i) => d.classList.toggle('active', i === activeDot));
   };
   const go = (n, manual) => {
     idx = (n + slides.length) % slides.length;
@@ -894,11 +973,11 @@ function initHeroCarousel() {
     if (manual) restart();
   };
   const next = () => go(idx + 1);
-  const prev = () => go(idx - 1);
-  const restart = () => { if (timer) clearInterval(timer); timer = setInterval(next, 4000); };
+  const restart = () => { if (timer) clearInterval(timer); timer = setInterval(next, 3500); };
 
   if ($('hcNext')) $('hcNext').onclick = () => go(idx + 1, true);
   if ($('hcPrev')) $('hcPrev').onclick = () => go(idx - 1, true);
+  render();
   restart();
 }
 
