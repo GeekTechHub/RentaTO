@@ -157,6 +157,58 @@ window.openFeature = (type) => {
     neural: {
       title: 'Reseñas y reputación',
       body: '<p>Después de cada renta, ambas partes pueden calificarse con estrellas y comentarios. Esa reputación queda visible en el perfil y ayuda a otros usuarios a confiar.</p>'
+    },
+    about: {
+      title: 'Quiénes somos',
+      body: `
+        <div style="text-align:center; margin-bottom:14px;">
+          <div style="font-size:1.4rem; font-weight:800; color:#002277;">RentaTÓ</div>
+          <div style="font-style:italic; font-weight:700; background:linear-gradient(90deg,#ff6a00,#e62525);-webkit-background-clip:text;background-clip:text;color:transparent;">Muévete sin límites</div>
+        </div>
+        <p>RentaTÓ es un marketplace innovador creado para conectar personas que desean rentar cualquier medio de transporte con propietarios o empresas que tienen vehículos disponibles para alquiler.</p>
+        <p>Nuestra plataforma permite alquilar medios de transporte terrestres, acuáticos y aéreos, sin importar el año, modelo o condición del vehículo, porque cada publicación muestra información clara, transparente y detallada para que ambas partes tengan seguridad al momento de hacer negocios.</p>
+        <p>Nosotros nos encargamos de conectar de forma rápida y eficiente a:</p>
+        <p>✅ Personas que necesitan rentar un vehículo.<br/>
+        ✅ Personas o empresas que desean generar ingresos rentando sus unidades.</p>
+        <p>En RentaTÓ, entendemos que toda unidad tiene valor y que cualquier persona debe tener acceso a soluciones de movilidad adaptadas a su necesidad.</p>
+
+        <h4 style="margin:18px 0 8px; color:#002277;">¿Qué puedes rentar en RentaTÓ?</h4>
+
+        <p><b>🚗 Transporte Terrestre</b></p>
+        <ul>
+          <li>Automóviles</li><li>Jeepetas / SUVs</li><li>Camionetas</li><li>Motocicletas</li>
+          <li>Autobuses</li><li>Patinetas eléctricas</li><li>Four Wheels / ATV</li>
+          <li>Camiones de carga</li><li>Furgonetas / Vans</li><li>Bicicletas</li>
+          <li><em>…y otros vehículos que califiquen dentro de esta categoría.</em></li>
+        </ul>
+
+        <p><b>🚤 Transporte Acuático</b></p>
+        <ul>
+          <li>Yates</li><li>Jet Ski</li><li>Lanchas rápidas</li><li>Botes de pesca</li>
+          <li>Catamaranes</li><li>Veleros</li><li>Ferry privados</li><li>Kayaks</li>
+          <li>Canoas</li><li>Barcos turísticos</li>
+          <li><em>…y otros vehículos que califiquen dentro de esta categoría.</em></li>
+        </ul>
+
+        <p><b>✈️ Transporte Aéreo</b></p>
+        <ul>
+          <li>Helicópteros</li><li>Avionetas privadas</li><li>Jets ejecutivos</li>
+          <li>Aviones charter</li><li>Drones de transporte</li><li>Aeronaves recreativas</li>
+          <li>Ultraligeros</li><li>Planeadores</li><li>Hidroaviones</li><li>Helicópteros turísticos</li>
+          <li><em>…y otras aeronaves que califiquen dentro de esta categoría.</em></li>
+        </ul>
+
+        <h4 style="margin:18px 0 8px; color:#002277;">Nuestra misión</h4>
+        <p>Convertirnos en la plataforma líder que conecta personas y empresas en un ecosistema de alquiler de transporte, ofreciendo opciones confiables, transparentes y accesibles para movilizarse sin límites.</p>
+        <p><b>RentaTÓ no solo renta vehículos… crea conexiones, oportunidades y libertad de movimiento.</b></p>
+
+        <div style="text-align:center; margin:16px 0;">
+          <div style="font-size:1.2rem; font-weight:800; color:#002277;">RentaTÓ</div>
+          <div style="font-style:italic; font-weight:700; background:linear-gradient(90deg,#ff6a00,#e62525);-webkit-background-clip:text;background-clip:text;color:transparent;">Muévete sin límites</div>
+        </div>
+
+        <p style="font-size:0.85rem; opacity:0.75;"><em>Inspirado en plataformas digitales de conexión entre oferta y demanda como Airbnb y Uber Technologies, pero enfocado en el mundo completo del transporte.</em></p>
+      `
     }
   };
 
@@ -166,7 +218,7 @@ window.openFeature = (type) => {
   $('detailsTitle').textContent = feat.title;
   $('detailsContent').innerHTML = `
     <div class="panel">
-      <div style="font-size: 1rem; line-height: 1.6; color: var(--muted);">${feat.body}</div>
+      <div style="font-size: 1rem; line-height: 1.6; color: var(--muted); text-align: left;">${feat.body}</div>
       <div style="margin-top: 20px; text-align: center;">
         <button class="btn primary" onclick="$('detailsBackdrop').style.display='none'">Entendido</button>
       </div>
@@ -867,47 +919,27 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================
 // Logo de RentaTÓ (separador entre categorías)
 const HC_LOGO = 'https://res.cloudinary.com/dor8g1woi/image/upload/c_pad,w_900,h_500,b_white,f_auto,q_auto/rentato/logo';
-const U = (id) => `https://images.unsplash.com/photo-${id}?w=900&h=500&fit=crop&auto=format&q=70`;
 
-// 10 imágenes por categoría (placeholder de Unsplash — reemplazables luego)
+// Imágenes por palabra clave (loremflickr devuelve una foto real del término).
+// El sufijo /all + lock numérico fija la imagen para que no cambie en cada carga.
+let _hcLock = 10;
+const KW = (keyword) => `https://loremflickr.com/900/500/${encodeURIComponent(keyword)}/all?lock=${_hcLock++}`;
+
+// 10 medios de transporte por categoría (según la lista oficial de RentaTÓ)
 const HC_LAND = [
-  '1503376780353-7e6692767b70', // deportivo rojo
-  '1494976388531-d1058494cdd8', // muscle car
-  '1552519507-da3b142c6e3d',    // clásico azul
-  '1503736334956-4c8f8e92946d', // SUV en montaña
-  '1568605117036-5fe5e7bab0b7', // SUV blanca
-  '1533473359331-0135ef1b58bf', // pickup off-road
-  '1558981806-ec527fa84c39',    // jeep
-  '1558618666-fcd25c85cd64',    // moto deportiva
-  '1449426468159-d96dbf08f19f', // moto en carretera
-  '1471479917193-f00955256257'  // convertible clásico
-].map(U);
+  'car', 'suv', 'pickup,truck', 'motorcycle', 'bus',
+  'electric,scooter', 'atv,quad', 'cargo,truck', 'van', 'bicycle'
+].map(KW);
 
 const HC_WATER = [
-  '1544551763-46a013bb70d5',    // yate lujo
-  '1505577058444-a3dab90d4253', // velero
-  '1567899378494-47b22a2ae96a', // lancha rápida
-  '1520340356584-f9917d1eea6f', // jetski
-  '1552074284-5e88ef1aef18',    // catamarán
-  '1540946485063-a40da27545f8', // bote en marina
-  '1502933691298-84fc14542831', // yate azul
-  '1473116763249-2faaef81ccda', // barco en costa
-  '1516132006923-6cf348e5dee2', // bote deportivo
-  '1569263979104-865ab7cd8d13'  // lancha atardecer
-].map(U);
+  'yacht', 'jetski', 'speedboat', 'fishing,boat', 'catamaran',
+  'sailboat', 'ferry', 'kayak', 'canoe', 'tourist,boat'
+].map(KW);
 
 const HC_AIR = [
-  '1436491865332-7a61a109cc05', // avión comercial cielo
-  '1540962351504-03099e0a754b', // avioneta privada
-  '1474302770737-173ee21bab63', // jet privado
-  '1583200786218-70a385eeaebd', // helicóptero
-  '1559060017-445fb9722f2a',    // helicóptero vuelo
-  '1569629743817-70d8db6c323b', // jet en pista
-  '1610642372651-fe6e7bc60ba0', // helicóptero moderno
-  '1542296332-2e4473faf563',    // avión pequeño
-  '1464037866556-6812c9d1c72e', // vista aérea avión
-  '1474302770737-173ee21bab63'  // jet (repetido de respaldo)
-].map(U);
+  'helicopter', 'small,airplane', 'private,jet', 'charter,airplane', 'drone',
+  'light,aircraft', 'ultralight,aircraft', 'glider,aircraft', 'seaplane', 'helicopter,tour'
+].map(KW);
 
 function initHeroCarousel() {
   const track = $('hcTrack');
