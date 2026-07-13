@@ -65,6 +65,7 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/kyc', require('./routes/kyc'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/admin', require('./routes/admin'));
 

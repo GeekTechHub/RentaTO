@@ -249,7 +249,6 @@
                         </div>
                         <div class="field"><label>Capacidad</label><input id="eCapacity" type="number" value="${esc(c.capacity)}" /></div>
                         <div class="field"><label>Precio / día (RD$)</label><input id="ePrice" type="number" value="${esc(c.price)}" /></div>
-                        <div class="field"><label>Depósito (RD$)</label><input id="eDeposit" type="number" value="${esc(c.deposit)}" /></div>
                         <div class="field span2"><label>Provincia</label>
                             <select id="eLoc">
                                 ${PROVS.map(p => `<option value="${esc(p)}" ${p === c.location ? 'selected' : ''}>${esc(p)}</option>`).join('')}
@@ -335,7 +334,7 @@
                     category: $('eCat').value,
                     capacity: Number($('eCapacity').value),
                     price: Number($('ePrice').value),
-                    deposit: Number($('eDeposit').value),
+                    deposit: 0,
                     location: $('eLoc').value,
                     image: $('eImage').value.trim(),
                     contactPhone: ($('ePhone')?.value || '').trim(),

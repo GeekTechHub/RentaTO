@@ -124,7 +124,6 @@ function renderListings(list, containerId) {
           <div class="badges">
             ${badgeVerify}
             ${ratingBadge}
-            <span class="badge2">Depósito: ${formatCurrency(c.deposit)}</span>
             <span class="badge2">Cualquier año</span>
           </div>
           <div class="meta" style="margin-top:8px">${c.note || 'Sin descripción.'}</div>
@@ -263,6 +262,40 @@ window.openFeature = (type) => {
         <p><b>13. Aceptación</b></p>
         <p>Al registrarse, acceder o utilizar RentaTÓ, el usuario declara haber leído, comprendido y aceptado íntegramente estos Términos y Condiciones.</p>
       `
+    },
+    contact: {
+      title: 'Contacto',
+      body: `
+        <p>¿Necesitas hablar con nosotros? Escríbenos y con gusto te ayudamos.</p>
+        <p style="margin-top:14px;">
+          📧 <b>Correo:</b> <a href="mailto:soporte@rentato.do">soporte@rentato.do</a><br/>
+          📱 <b>WhatsApp:</b> <a href="https://wa.me/18090000000" target="_blank" rel="noopener">+1 (809) 000-0000</a><br/>
+          📍 <b>Ubicación:</b> Punta Cana, República Dominicana
+        </p>
+        <p style="margin-top:14px;">Nuestro horario de atención es de lunes a sábado, de 8:00 a.m. a 6:00 p.m.</p>
+      `
+    },
+    help: {
+      title: 'Centro de ayuda',
+      body: `
+        <p><b>¿Cómo publico mi vehículo?</b></p>
+        <p>Inicia sesión, entra a "Publicar mi vehículo", completa los datos y sube una foto. Tu publicación pasa a revisión y aparece en el catálogo cuando la aprobamos.</p>
+
+        <p><b>¿Cómo reservo un vehículo?</b></p>
+        <p>Busca el vehículo que te interese, ábrelo y elige tus fechas. Para coordinar con el dueño puedes desbloquear su contacto por US$1 o chatear desde "Mi Cuenta → Mis Reservas".</p>
+
+        <p><b>¿Qué es la tarifa de US$1?</b></p>
+        <p>Es el pago por el servicio de conexión: te da acceso al teléfono/WhatsApp del dueño para negociar directamente. No es el alquiler del vehículo.</p>
+
+        <p><b>¿Cómo verifico mi identidad?</b></p>
+        <p>Desde "Mi Cuenta" verás la opción para subir tu cédula y una selfie. Un administrador la revisa y quedas como usuario verificado.</p>
+
+        <p><b>¿Cómo dejo una reseña?</b></p>
+        <p>Después de completar una reserva, aparece el botón "Dejar reseña" en "Mis Reservas". Tanto el dueño como el rentador pueden calificarse.</p>
+
+        <p><b>¿Tienes otra pregunta?</b></p>
+        <p>Escríbenos desde la opción <b>Contacto</b> y te respondemos.</p>
+      `
     }
   };
 
@@ -279,6 +312,51 @@ window.openFeature = (type) => {
     </div>
   `;
   $('detailsBackdrop').style.display = 'flex';
+};
+
+// ==========================
+// Buzón de recomendaciones
+// ==========================
+window.openFeedback = () => {
+  $('detailsTitle').textContent = 'Buzón de recomendaciones';
+  $('detailsContent').innerHTML = `
+    <div class="panel">
+      <p style="color:var(--muted,#888); margin-bottom:14px;">Tu opinión nos ayuda a mejorar RentaTÓ. Cuéntanos qué te gustaría ver, qué mejorarías o cualquier problema que hayas encontrado.</p>
+      <div class="form" style="display:flex; flex-direction:column; gap:12px;">
+        <input class="btn" id="fbName" type="text" placeholder="Tu nombre (opcional)" />
+        <input class="btn" id="fbEmail" type="email" placeholder="Tu correo (opcional, por si queremos responderte)" />
+        <textarea class="btn" id="fbMessage" rows="5" placeholder="Escribe tu recomendación o comentario aquí..."></textarea>
+        <button class="btn primary" onclick="submitFeedback()">Enviar recomendación</button>
+      </div>
+    </div>
+  `;
+  $('detailsBackdrop').style.display = 'flex';
+};
+
+window.submitFeedback = async () => {
+  const message = ($('fbMessage')?.value || '').trim();
+  if (!message) return showToast('Escribe tu recomendación antes de enviar.');
+  const payload = {
+    name: ($('fbName')?.value || '').trim(),
+    email: ($('fbEmail')?.value || '').trim(),
+    message
+  };
+  try {
+    const res = await fetch(`${API_BASE}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast('¡Gracias! Recibimos tu recomendación.');
+      $('detailsBackdrop').style.display = 'none';
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || 'No se pudo enviar. Intenta de nuevo.');
+    }
+  } catch (err) {
+    showToast('Servidor no disponible. Intenta más tarde.');
+  }
 };
 
 // ==========================
@@ -300,15 +378,11 @@ window.openDetails = (id) => {
                     <b>Tipo:</b> ${domainLabel(car.domain)}<br/>
                     <b>Categoría:</b> ${car.category || car.type} • <b>Transmisión:</b> ${car.transmission === 'MANUAL' ? 'Mecánica' : 'Automática'}<br/>
                     <b>Combustible:</b> ${car.energyType || 'GASOLINE'} • <b>Capacidad:</b> ${car.capacity || 4} personas<br/>
-                    <b>Autonomía:</b> ${car.fuelRange || 500} km<br/>
-                    <b>Placa:</b> ${car.licensePlate || 'N/D'}<br/>
-                    <b>Licencia requerida:</b> ${car.requiresOperatorLevel || 'STANDARD_LICENSE'}<br/>
                     <br/>
                     <b>Dueño:</b> ${car.owner ? car.owner.name : '—'} (Reputación: ${trustScore}%)<br/>
                     <b>Reseñas:</b> ${car.reviewCount > 0 ? `★ ${Number(car.rating).toFixed(1)} (${car.reviewCount} reseña${car.reviewCount === 1 ? '' : 's'})` : 'Aún sin reseñas'}<br/>
                     <b>Ubicación:</b> ${car.location}<br/>
                     <b>Precio:</b> ${formatCurrency(car.price)}/día<br/>
-                    <b>Depósito de garantía:</b> ${formatCurrency(car.deposit)}<br/>
                     <br/>
                     <b>Descripción:</b> ${car.note || 'Sin descripción.'}
                 </div>
@@ -604,10 +678,6 @@ window.openPublish = () => {
                     <label>Precio por día (RD$)</label>
                     <input id="pPrice" type="number" placeholder="Ej: 2500" />
                 </div>
-                <div class="field">
-                    <label>Depósito de garantía (RD$)</label>
-                    <input id="pDeposit" type="number" placeholder="Se devuelve al final si todo va bien" />
-                </div>
                 <div class="field span2">
                     <label>Teléfono / WhatsApp de contacto</label>
                     <input id="pPhone" type="tel" placeholder="Ej: 809-555-1234" />
@@ -617,37 +687,12 @@ window.openPublish = () => {
                 </div>
                 <div class="field span2">
                     <label>Foto del vehículo</label>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                        <input id="pImageFile" type="file" accept="image/*" capture="environment" style="flex:1; min-width:200px;" onchange="uploadCarImage(event)" />
-                        <span class="small" style="color:var(--muted,#888);">o pega un enlace abajo</span>
-                    </div>
-                    <input id="pImage" type="url" placeholder="https://..." oninput="previewImage()" style="margin-top:6px; width:100%;" />
+                    <input id="pImageFile" type="file" accept="image/*" capture="environment" style="width:100%;" onchange="uploadCarImage(event)" />
+                    <input id="pImage" type="hidden" />
                     <div class="small" id="pImageHint" style="color:var(--muted,#888); margin-top:4px;">
-                        Toma una foto con tu teléfono o pega un enlace de imagen.
+                        Toma una foto con tu teléfono o elige una de tu galería.
                     </div>
                     <img id="pImagePreview" style="display:none; margin-top:8px; max-width:200px; border-radius:8px;" />
-                </div>
-                <div class="field">
-                    <label>Placa o matrícula</label>
-                    <input id="pPlate" placeholder="Ej: A839211" />
-                </div>
-                <div class="field">
-                    <label>Número de chasis (opcional)</label>
-                    <input id="pChassis" placeholder="Opcional" />
-                </div>
-                <div class="field">
-                    <label>¿Cuántos KM rinde el tanque? (opcional)</label>
-                    <input type="number" id="pRange" value="500" placeholder="Ej: 500" />
-                </div>
-                <div class="field">
-                    <label>Licencia requerida para conducirlo</label>
-                    <select id="pOperator">
-                        <option value="STANDARD_LICENSE">Licencia normal de conducir</option>
-                        <option value="MOTORCYCLE_LICENSE">Licencia de motor</option>
-                        <option value="CAPTAIN_LICENSE">Licencia de capitán/patrón</option>
-                        <option value="PILOT_LICENSE">Licencia de piloto</option>
-                        <option value="NONE">Ninguna (bici, kayak...)</option>
-                    </select>
                 </div>
                 <input type="hidden" id="pSafety" value="land_standard" />
                 <div class="field span2">
@@ -685,22 +730,18 @@ window.updatePubCatsAndDefaults = () => {
   };
   cat.innerHTML = opts[dom].map(o => `<option value="${o}">${o}</option>`).join('');
 
-  // Update default safety profile and operator levels based on selected domain
+  // Update default safety profile based on selected domain
   const safety = $('pSafety');
-  const operator = $('pOperator');
   const energy = $('pEnergy');
-  
+
   if (dom === 'LAND') {
     if (safety) safety.value = 'land_standard';
-    if (operator) operator.value = 'STANDARD_LICENSE';
     if (energy) energy.value = 'GASOLINE';
   } else if (dom === 'WATER') {
     if (safety) safety.value = 'water_standard';
-    if (operator) operator.value = 'CAPTAIN_LICENSE';
     if (energy) energy.value = 'DIESEL';
   } else if (dom === 'AIR') {
     if (safety) safety.value = 'air_standard';
-    if (operator) operator.value = 'PILOT_LICENSE';
     if (energy) energy.value = 'JET_FUEL';
   }
 };
@@ -848,17 +889,14 @@ window.publishCar = async () => {
     brand: $('pBrand').value,
     model: $('pModel').value,
     price: $('pPrice').value,
-    deposit: $('pDeposit').value,
+    deposit: 0,
     location: $('pLoc').value,
     note: $('pNote').value,
     image: $('pImage') ? $('pImage').value.trim() : '',
     transmission: $('pTrans').value,
     capacity: $('pCapacity').value,
-    licensePlate: $('pPlate').value,
-    chassisNumber: $('pChassis').value,
     contactPhone: $('pPhone') ? $('pPhone').value.trim() : '',
-    fuelRange: $('pRange').value,
-    requiresOperatorLevel: $('pOperator').value,
+    fuelRange: 0,
     safetyProfile: $('pSafety').value
   };
 
@@ -1020,9 +1058,13 @@ function initHeroCarousel() {
   push(HC_LOGO, '');
   HC_AIR.forEach(u => push(u, 'Aéreo'));
 
-  // Render slides
+  // Render slides (usamos <img> para poder detectar fallos de carga y
+  // sustituir por el logo si una imagen no está disponible)
   track.innerHTML = seq.map(s =>
-    `<div class="hc-slide${s.cat === '' ? ' hc-logo' : ''}" style="background-image:url('${s.url}')"></div>`
+    `<div class="hc-slide${s.cat === '' ? ' hc-logo' : ''}">
+       <img src="${s.url}" alt="${s.cat || 'RentaTÓ'}" loading="lazy"
+            onerror="this.onerror=null;this.src='${HC_LOGO}';this.parentElement.classList.add('hc-logo');" />
+     </div>`
   ).join('');
   const slides = Array.from(track.children);
 

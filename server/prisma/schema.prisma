@@ -157,3 +157,12 @@ model ConnectionUnlock {
 
   @@unique([renterId, carId])
 }
+
+model Feedback {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String?
+  message   String
+  status    String   @default("NEW") // NEW, READ, ARCHIVED
+  createdAt DateTime @default(now())
+}

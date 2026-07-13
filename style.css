@@ -1229,9 +1229,16 @@ footer {
 .hc-slide {
   min-width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+}
+.hc-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.hc-slide.hc-logo img {
+  object-fit: contain;
+  background: #fff;
 }
 .hc-arrow {
   position: absolute;
@@ -1291,11 +1298,8 @@ footer {
   transition: opacity .3s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
 }
-/* slide del logo: fondo blanco, imagen contenida */
-.hc-slide.hc-logo {
-  background-size: contain;
-  background-color: #fff;
-}
+/* slide del logo: fondo blanco (el object-fit lo maneja .hc-slide.hc-logo img) */
+.hc-slide.hc-logo { background-color: #fff; }
 
 /* ===== Brand logo button + audio (derecha) ===== */
 .brand-logo-btn {
