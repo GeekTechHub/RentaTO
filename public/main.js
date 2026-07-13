@@ -209,6 +209,60 @@ window.openFeature = (type) => {
 
         <p style="font-size:0.85rem; opacity:0.75;"><em>Inspirado en plataformas digitales de conexión entre oferta y demanda como Airbnb y Uber Technologies, pero enfocado en el mundo completo del transporte.</em></p>
       `
+    },
+    terms: {
+      title: 'Términos y Condiciones',
+      body: `
+        <p><b>1. Naturaleza de la Plataforma</b></p>
+        <p>RentaTÓ es una plataforma tecnológica de intermediación cuya finalidad es facilitar la conexión entre personas físicas o jurídicas que ofrecen vehículos en alquiler y personas interesadas en contratarlos.</p>
+        <p>RentaTÓ no es propietaria, administradora, operadora, arrendadora, subarrendadora, representante ni aseguradora de los vehículos anunciados en la plataforma. Asimismo, RentaTÓ no participa en la negociación, celebración, ejecución o cumplimiento de los contratos de alquiler celebrados entre los usuarios.</p>
+        <p>Los contratos de alquiler son celebrados única y exclusivamente entre el propietario o representante autorizado del vehículo y el usuario interesado en alquilarlo.</p>
+
+        <p><b>2. Alcance del Servicio</b></p>
+        <p>La función de RentaTÓ se limita a: facilitar la publicación de anuncios; promocionar los anuncios mediante herramientas tecnológicas y de mercadeo; facilitar el contacto entre las partes; proveer herramientas de búsqueda, filtros y comunicación; y ofrecer acceso a la información del anunciante mediante el pago de la tarifa correspondiente, cuando aplique.</p>
+        <p>El pago realizado a RentaTÓ corresponde exclusivamente al uso de la plataforma tecnológica y al servicio de intermediación digital. Dicho pago no constituye el alquiler del vehículo ni representa garantía de que las partes celebren un contrato.</p>
+
+        <p><b>3. Vehículos Publicados</b></p>
+        <p>Podrán anunciarse vehículos terrestres, acuáticos y aéreos, siempre que su publicación no contravenga la legislación vigente de la República Dominicana.</p>
+        <p>La aceptación de un anuncio dentro de la plataforma no constituye una certificación, inspección, garantía ni aprobación por parte de RentaTÓ.</p>
+
+        <p><b>4. Responsabilidad de los Usuarios</b></p>
+        <p>Cada propietario o representante será el único responsable de: la legalidad del vehículo; la exactitud de la información publicada; el estado físico y mecánico del vehículo; los permisos, licencias, seguros y autorizaciones requeridos por la ley; el precio del alquiler; y los depósitos, garantías y condiciones de uso.</p>
+        <p>Cada arrendatario será responsable de verificar las condiciones ofrecidas antes de aceptar cualquier acuerdo.</p>
+
+        <p><b>5. Condiciones del Alquiler</b></p>
+        <p>Las condiciones relativas al precio, duración, depósitos, seguros, entrega, devolución, combustible, kilometraje, mantenimiento, daños, penalidades y demás aspectos del alquiler serán pactadas exclusivamente entre el propietario y el arrendatario.</p>
+        <p>RentaTÓ no interviene en dichas negociaciones ni forma parte del contrato celebrado entre las partes.</p>
+
+        <p><b>6. Descargo de Responsabilidad</b></p>
+        <p>RentaTÓ no garantiza: la disponibilidad de los vehículos; la veracidad absoluta de los anuncios; el estado mecánico o estructural de los vehículos; la identidad o solvencia económica de los usuarios; ni el cumplimiento de las obligaciones asumidas entre las partes.</p>
+        <p>En consecuencia, RentaTÓ no será responsable por accidentes, daños materiales, lesiones personales, robos, pérdidas económicas, incumplimientos contractuales, fraudes, multas, sanciones administrativas o conflictos derivados de la relación entre propietario y arrendatario.</p>
+
+        <p><b>7. Política de Contenido</b></p>
+        <p>Los usuarios garantizan que toda información publicada es verdadera, actualizada y de su propiedad o cuentan con autorización para utilizarla.</p>
+        <p>RentaTÓ podrá eliminar cualquier publicación que sea falsa o engañosa; infrinja derechos de terceros; incite actividades ilícitas; contenga lenguaje ofensivo o discriminatorio; o vulnere la legislación vigente o estos Términos y Condiciones.</p>
+
+        <p><b>8. Política de Privacidad</b></p>
+        <p>RentaTÓ recopilará únicamente la información necesaria para la prestación de sus servicios, incluyendo datos de registro, contacto y uso de la plataforma.</p>
+        <p>Los datos personales serán tratados conforme a la legislación aplicable de la República Dominicana y utilizados para: gestionar las cuentas de usuario; facilitar la comunicación entre las partes; mejorar la experiencia dentro de la plataforma; atender requerimientos legales cuando corresponda; y enviar comunicaciones relacionadas con el servicio, cuando el usuario las haya aceptado.</p>
+        <p>RentaTÓ no comercializa datos personales de sus usuarios sin una base legal o el consentimiento correspondiente.</p>
+
+        <p><b>9. Publicidad</b></p>
+        <p>Como parte de su modelo de negocio, RentaTÓ podrá mostrar anuncios publicitarios, promociones y contenido patrocinado dentro de la plataforma.</p>
+        <p>La presencia de publicidad no constituye recomendación, certificación ni respaldo de los productos o servicios anunciados.</p>
+
+        <p><b>10. Propiedad Intelectual</b></p>
+        <p>La marca RentaTÓ, su logotipo, diseño, software, bases de datos, interfaz gráfica, contenido original y demás elementos que integran la plataforma son propiedad exclusiva de sus titulares y se encuentran protegidos por la legislación aplicable sobre propiedad intelectual.</p>
+
+        <p><b>11. Legislación Aplicable</b></p>
+        <p>Estos Términos y Condiciones se interpretarán conforme a la legislación vigente de la República Dominicana, incluyendo, en la medida en que resulte aplicable al funcionamiento de la plataforma: la Constitución de la República Dominicana; la Ley No. 126-02 sobre Comercio Electrónico, Documentos y Firmas Digitales; la Ley General de Protección de los Derechos del Consumidor o Usuario (Ley No. 358-05), cuando corresponda; la Ley No. 172-13 sobre Protección de Datos de Carácter Personal, respecto al tratamiento de datos personales; y cualquier otra disposición legal o reglamentaria aplicable.</p>
+
+        <p><b>12. Jurisdicción</b></p>
+        <p>Toda controversia relacionada con el uso de la plataforma será conocida por los tribunales competentes de la República Dominicana, salvo que una norma de orden público establezca una competencia distinta.</p>
+
+        <p><b>13. Aceptación</b></p>
+        <p>Al registrarse, acceder o utilizar RentaTÓ, el usuario declara haber leído, comprendido y aceptado íntegramente estos Términos y Condiciones.</p>
+      `
     }
   };
 
@@ -485,7 +539,7 @@ window.openPublish = () => {
                 </select>
                 <label class="terms-accept" id="authTermsWrap" style="display:none;">
                     <input type="checkbox" id="authTerms" />
-                    <span>He leído y acepto los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> de RentaTÓ.</span>
+                    <span>He leído y acepto los <a href="#" onclick="openFeature('terms'); return false;">Términos y Condiciones</a> de RentaTÓ.</span>
                 </label>
                 <button class="btn primary" id="authSubmit" onclick="handleAuth()">Acceder</button>
                 <div class="small text-center">Tus datos quedan protegidos. Solo los usamos para verificar identidad.</div>
