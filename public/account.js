@@ -140,7 +140,6 @@
                             </div>
                             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                                 ${statusBadge(b.status)}
-                                <span class="badge2">Depósito: ${esc(b.depositStatus)}</span>
                                 <span class="badge2 ok">${fmtCurrency(b.totalPrice)}</span>
                             </div>
                         </div>
@@ -505,9 +504,10 @@
     // ============================================
     const loadAdminPending = async () => {
         try {
-            const [cars, kycPending] = await Promise.all([
+            const [cars, kycPending, feedback] = await Promise.all([
                 apiCall('/cars/admin/pending').catch(() => []),
-                apiCall('/kyc/pending').catch(() => [])
+                apiCall('/kyc/pending').catch(() => []),
+                apiCall('/feedback').catch(() => [])
             ]);
             const content = $('accountContent');
 
@@ -562,14 +562,30 @@
                 </div>
             `).join('');
 
+            // Sección 3: Buzón de recomendaciones
+            const fbBlock = !feedback.length
+                ? `<div style="padding:20px; text-align:center; color: var(--muted, #888);">No hay recomendaciones en el buzón.</div>`
+                : `<div class="small" style="margin-bottom:12px; color:var(--muted,#888);">
+                    ${feedback.length} recomendación(es) recibida(s):</div>` + feedback.map(f => `
+                <div class="card" style="padding:14px; margin-bottom:10px;">
+                    <div class="small" style="color:var(--muted,#888);">
+                        ${f.createdAt ? fmtDate(f.createdAt) : ''} ·
+                        <b>${esc(f.name || 'Anónimo')}</b>
+                        ${f.email ? ` · <a href="mailto:${esc(f.email)}">${esc(f.email)}</a>` : ''}
+                    </div>
+                    <div style="margin-top:6px; white-space:pre-wrap;">${esc(f.message)}</div>
+                </div>
+            `).join('');
+
             content.innerHTML = `
-                <div style="display:flex; gap:8px; margin-bottom:14px;">
+                <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
                     <button class="btn primary" id="_admSubVehicles" onclick="window._showAdmSub('vehicles')">Vehículos (${cars.length})</button>
                     <button class="btn" id="_admSubKyc" onclick="window._showAdmSub('kyc')">Verificaciones (${kycPending.length})</button>
+                    <button class="btn" id="_admSubFb" onclick="window._showAdmSub('feedback')">Buzón (${feedback.length})</button>
                 </div>
                 <div id="_admSubBody"></div>
             `;
-            window._admBlocks = { vehicles: carsBlock, kyc: kycBlock };
+            window._admBlocks = { vehicles: carsBlock, kyc: kycBlock, feedback: fbBlock };
             window._showAdmSub('vehicles');
         } catch (e) {
             $('accountContent').innerHTML = `<div style="color:var(--warn,#f80); padding:20px;">Error: ${esc(e.message)}</div>`;
@@ -580,8 +596,10 @@
         const body = $('_admSubBody');
         const v = $('_admSubVehicles');
         const k = $('_admSubKyc');
+        const f = $('_admSubFb');
         if (v) v.classList.toggle('primary', sub === 'vehicles');
         if (k) k.classList.toggle('primary', sub === 'kyc');
+        if (f) f.classList.toggle('primary', sub === 'feedback');
         if (body && window._admBlocks) body.innerHTML = window._admBlocks[sub] || '';
     };
 
@@ -792,7 +810,7 @@
     // Actions
     // ============================================
     window.cancelBooking = async (id) => {
-        if (!confirm('¿Cancelar esta reserva? El depósito se liberará.')) return;
+        if (!confirm('¿Cancelar esta reserva?')) return;
         try {
             await apiCall(`/bookings/${id}/cancel`, { method: 'POST' });
             showToastSafe('Reserva cancelada.');
@@ -801,7 +819,7 @@
     };
 
     window.completeBooking = async (id) => {
-        if (!confirm('¿Marcar como completada? Esto liberará el depósito (o aplicará penalidad si hay retraso).')) return;
+        if (!confirm('¿Marcar esta reserva como completada?')) return;
         try {
             const data = await apiCall(`/bookings/${id}/complete`, { method: 'POST' });
             showToastSafe(data.message || 'Reserva completada.');

@@ -106,7 +106,7 @@ async function main() {
             capacity: 5, requiresOperatorLevel: 'STANDARD_LICENSE',
             safetyProfile: 'land_standard',
             domain: 'LAND', category: 'SEDAN', energyType: 'GASOLINE',
-            image: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&q=80'
+            image: 'https://loremflickr.com/800/500/honda,civic/all?lock=7'
         },
         {
             brand: 'Tesla', model: 'Model 3', year: 2024, type: 'Eléctrico',

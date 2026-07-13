@@ -115,7 +115,7 @@ router.post('/', auth, validate(createBookingSchema), asyncHandler(async (req, r
     } catch (_) { /* optional */ }
 
     res.status(201).json({
-        message: 'Reserva confirmada. El depósito queda retenido como garantía.',
+        message: 'Reserva confirmada. Coordina la entrega directamente con el dueño.',
         booking, days, totalPrice, financialBreakdown
     });
 }));
@@ -160,7 +160,7 @@ router.post('/:id/complete', auth, asyncHandler(async (req, res) => {
         }
     });
 
-    res.json({ message: `Reserva completada. Depósito: ${depositStatus}.`, penaltyApplied: penalty, booking: updated });
+    res.json({ message: `Reserva completada.`, penaltyApplied: penalty, booking: updated });
 }));
 
 // POST /api/bookings/:id/cancel
@@ -189,7 +189,7 @@ router.post('/:id/cancel', auth, asyncHandler(async (req, res) => {
         }
     });
 
-    res.json({ message: 'Reserva cancelada y depósito liberado.', booking: updated });
+    res.json({ message: 'Reserva cancelada.', booking: updated });
 }));
 
 // GET /api/bookings/me  (As renter)

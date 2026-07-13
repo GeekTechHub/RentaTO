@@ -220,7 +220,7 @@ router.post('/:id/reject', auth, requireAdmin, asyncHandler(async (req, res) => 
 router.put('/:id', auth, validate(updateCarSchema), asyncHandler(async (req, res) => {
     const car = await prisma.car.findUnique({ where: { id: req.params.id } });
     if (!car) return res.status(404).json({ error: 'Vehículo no encontrado' });
-    if (car.ownerId !== req.user.id) {
+    if (car.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Solo el dueño puede editar este vehículo' });
     }
 
@@ -262,7 +262,7 @@ router.put('/:id', auth, validate(updateCarSchema), asyncHandler(async (req, res
 router.delete('/:id', auth, asyncHandler(async (req, res) => {
     const car = await prisma.car.findUnique({ where: { id: req.params.id } });
     if (!car) return res.status(404).json({ error: 'Vehículo no encontrado' });
-    if (car.ownerId !== req.user.id) {
+    if (car.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Solo el dueño puede eliminar este vehículo' });
     }
 

@@ -1414,3 +1414,15 @@ footer {
 }
 .terms-accept input { margin-top: 3px; flex-shrink: 0; }
 .terms-accept a { color: var(--rd-blue, #0b3ea9); text-decoration: underline; }
+
+/* Botón Publicar: degradado azul oscuro → naranja (colores del logo) */
+.btn-publish {
+  background: linear-gradient(90deg, #002277, #ff6a00);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+.btn-publish:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}

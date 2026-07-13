@@ -1,5 +1,9 @@
 // RentaTO — frontend monolito (vanilla JS). Land / Water / Air taxonomy.
 const $ = (id) => document.getElementById(id);
+// Escape de HTML para todo dato que venga del usuario/DB (previene XSS)
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[c]));
 const API_BASE = window.RENTARD_API_BASE || '/api';
 
 let cars = [];
@@ -112,12 +116,12 @@ function renderListings(list, containerId) {
       : `<span class="badge2">Sin reseñas aún</span>`;
 
     el.innerHTML = `
-        <div class="img" style="background-image: url('${c.image || 'https://images.unsplash.com/photo-1542362567-b05503f35259'}')"></div>
+        <div class="img" style="background-image: url('${esc(c.image) || 'https://images.unsplash.com/photo-1542362567-b05503f35259'}')"></div>
         <div class="body">
           <div class="row">
             <div>
-              <h3>${c.brand} ${c.model} (${c.year})</h3>
-              <div class="meta">${domainLabel(c.domain)} • ${c.category || c.type} • ${c.location}</div>
+              <h3>${esc(c.brand)} ${esc(c.model)} (${esc(c.year)})</h3>
+              <div class="meta">${domainLabel(c.domain)} • ${esc(c.category || c.type)} • ${esc(c.location)}</div>
             </div>
             <div class="price">${formatCurrency(c.price)}/día</div>
           </div>
@@ -126,7 +130,7 @@ function renderListings(list, containerId) {
             ${ratingBadge}
             <span class="badge2">Cualquier año</span>
           </div>
-          <div class="meta" style="margin-top:8px">${c.note || 'Sin descripción.'}</div>
+          <div class="meta" style="margin-top:8px">${esc(c.note) || 'Sin descripción.'}</div>
         </div>
         <div class="actions">
           <button class="btn primary view-btn" data-id="${c.id}">Ver y Reservar</button>
@@ -269,8 +273,7 @@ window.openFeature = (type) => {
         <p>¿Necesitas hablar con nosotros? Escríbenos y con gusto te ayudamos.</p>
         <p style="margin-top:14px;">
           📧 <b>Correo:</b> <a href="mailto:soporte@rentato.do">soporte@rentato.do</a><br/>
-          📱 <b>WhatsApp:</b> <a href="https://wa.me/18090000000" target="_blank" rel="noopener">+1 (809) 000-0000</a><br/>
-          📍 <b>Ubicación:</b> Punta Cana, República Dominicana
+          📱 <b>WhatsApp:</b> <a href="https://wa.me/18090000000" target="_blank" rel="noopener">+1 (809) 000-0000</a>
         </p>
         <p style="margin-top:14px;">Nuestro horario de atención es de lunes a sábado, de 8:00 a.m. a 6:00 p.m.</p>
       `
@@ -279,16 +282,17 @@ window.openFeature = (type) => {
       title: 'Centro de ayuda',
       body: `
         <p><b>¿Cómo publico mi vehículo?</b></p>
-        <p>Inicia sesión, entra a "Publicar mi vehículo", completa los datos y sube una foto. Tu publicación pasa a revisión y aparece en el catálogo cuando la aprobamos.</p>
+        <p>Inicia sesión, entra a "Publicar mi vehículo", completa los datos y sube una foto del mismo. Tu publicación pasa a revisión y aparece en el catálogo cuando la aprobamos.</p>
 
         <p><b>¿Cómo reservo un vehículo?</b></p>
-        <p>Busca el vehículo que te interese, ábrelo y elige tus fechas. Para coordinar con el dueño puedes desbloquear su contacto por US$1 o chatear desde "Mi Cuenta → Mis Reservas".</p>
+        <p>Busca el vehículo que te interese, ábrelo y elige tus fechas. Para coordinar con el dueño puedes desbloquear su contacto por US$1 (WhatsApp, teléfono, correo electrónico — lo que esté disponible) o chatear desde "Mi Cuenta → Mis Reservas".</p>
+        <p><em>Nota: esta última opción estará disponible con acceso durante un mes, luego de realizar el pago de US$1.00.</em></p>
 
-        <p><b>¿Qué es la tarifa de US$1?</b></p>
-        <p>Es el pago por el servicio de conexión: te da acceso al teléfono/WhatsApp del dueño para negociar directamente. No es el alquiler del vehículo.</p>
+        <p><b>¿Qué es la tarifa de US$1.00?</b></p>
+        <p>Es el pago por el servicio de conexión: te da acceso a WhatsApp, teléfono o correo electrónico (lo que esté disponible) del dueño para negociar directamente. No es el alquiler del vehículo.</p>
 
-        <p><b>¿Cómo verifico mi identidad?</b></p>
-        <p>Desde "Mi Cuenta" verás la opción para subir tu cédula y una selfie. Un administrador la revisa y quedas como usuario verificado.</p>
+        <p><b>Verificación de identidad</b></p>
+        <p>La verificación de identidad y cualquier acuerdo entre el arrendador y el arrendatario son de exclusiva responsabilidad de las partes. RentaTÓ únicamente facilita la conexión entre ellas y no participa ni responde por dichas verificaciones o acuerdos.</p>
 
         <p><b>¿Cómo dejo una reseña?</b></p>
         <p>Después de completar una reserva, aparece el botón "Dejar reseña" en "Mis Reservas". Tanto el dueño como el rentador pueden calificarse.</p>
@@ -317,6 +321,14 @@ window.openFeature = (type) => {
 // ==========================
 // Buzón de recomendaciones
 // ==========================
+// Baja al buscador del hero y enfoca el campo de texto
+window.focusSearch = () => {
+  const q = $('q');
+  if (!q) return;
+  q.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => q.focus(), 450);
+};
+
 window.openFeedback = () => {
   $('detailsTitle').textContent = 'Buzón de recomendaciones';
   $('detailsContent').innerHTML = `
@@ -368,7 +380,7 @@ window.openDetails = (id) => {
   activeCarId = id;
 
   const trustScore = car.owner && car.owner.trustScore ? car.owner.trustScore : 88;
-  $('detailsTitle').textContent = `${car.brand} ${car.model} (${car.year})`;
+  $('detailsTitle').textContent = `${esc(car.brand)} ${esc(car.model)} (${esc(car.year)})`;
 
   $('detailsContent').innerHTML = `
         <div class="modal-grid">
@@ -376,15 +388,15 @@ window.openDetails = (id) => {
                 <h4>Detalles del vehículo</h4>
                 <div class="kv">
                     <b>Tipo:</b> ${domainLabel(car.domain)}<br/>
-                    <b>Categoría:</b> ${car.category || car.type} • <b>Transmisión:</b> ${car.transmission === 'MANUAL' ? 'Mecánica' : 'Automática'}<br/>
-                    <b>Combustible:</b> ${car.energyType || 'GASOLINE'} • <b>Capacidad:</b> ${car.capacity || 4} personas<br/>
+                    <b>Categoría:</b> ${esc(car.category || car.type)} • <b>Transmisión:</b> ${car.transmission === 'MANUAL' ? 'Mecánica' : 'Automática'}<br/>
+                    <b>Combustible:</b> ${esc(car.energyType || 'GASOLINE')} • <b>Capacidad:</b> ${car.capacity || 4} personas<br/>
                     <br/>
-                    <b>Dueño:</b> ${car.owner ? car.owner.name : '—'} (Reputación: ${trustScore}%)<br/>
+                    <b>Dueño:</b> ${car.owner ? esc(car.owner.name) : '—'} (Reputación: ${trustScore}%)<br/>
                     <b>Reseñas:</b> ${car.reviewCount > 0 ? `★ ${Number(car.rating).toFixed(1)} (${car.reviewCount} reseña${car.reviewCount === 1 ? '' : 's'})` : 'Aún sin reseñas'}<br/>
-                    <b>Ubicación:</b> ${car.location}<br/>
+                    <b>Ubicación:</b> ${esc(car.location)}<br/>
                     <b>Precio:</b> ${formatCurrency(car.price)}/día<br/>
                     <br/>
-                    <b>Descripción:</b> ${car.note || 'Sin descripción.'}
+                    <b>Descripción:</b> ${esc(car.note) || 'Sin descripción.'}
                 </div>
                 <div class="small" style="margin-top:15px; color: var(--warn)">Toda renta se rige por las leyes dominicanas aplicables (Tránsito 63-17, Seguros 146-02, Firmas Digitales 126-02).</div>
             </div>
@@ -403,7 +415,7 @@ window.openDetails = (id) => {
                     <div class="field span2">
                         <label style="display:flex; gap:8px; align-items:flex-start;">
                         <input id="bkAgree" type="checkbox" style="margin-top:2px">
-                        <span class="small">Acepto las condiciones de uso. Entiendo que el depósito de garantía queda retenido durante la renta.</span>
+                        <span class="small">Acepto las condiciones de uso. Entiendo que RentaTÓ solo conecta a las partes; los términos de la renta se acuerdan directamente con el dueño.</span>
                         </label>
                     </div>
                     <div class="field span2">
@@ -545,11 +557,11 @@ async function loadCarReviews(carId) {
       const date = new Date(r.createdAt).toLocaleDateString('es-DO', { day: '2-digit', month: 'short', year: 'numeric' });
       return `<div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
         <div style="display:flex; justify-content:space-between; gap:8px;">
-          <b>${r.author?.name || 'Usuario'}</b>
+          <b>${esc(r.author?.name) || 'Usuario'}</b>
           <span style="color:#f5b301;">${stars}</span>
         </div>
         <div class="small" style="color:var(--muted,#888); margin-top:2px;">${date}</div>
-        ${r.comment ? `<div style="margin-top:6px;">${r.comment.replace(/[<>]/g, '')}</div>` : ''}
+        ${r.comment ? `<div style="margin-top:6px;">${esc(r.comment)}</div>` : ''}
       </div>`;
     }).join('');
   } catch (err) {
@@ -961,6 +973,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = $(id);
     if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSearch(); });
   });
+
+  // Búsqueda en vivo mientras escribes (estilo YouTube, con debounce)
+  let _searchTimer = null;
+  const qInput = $('q');
+  if (qInput) qInput.addEventListener('input', () => {
+    if (_searchTimer) clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(handleSearch, 350);
+  });
   ['loc', 'type'].forEach(id => {
     const el = $(id);
     if (el) el.addEventListener('change', handleSearch);
@@ -1020,43 +1040,65 @@ document.addEventListener('DOMContentLoaded', () => {
 // Logo de RentaTÓ (separador entre categorías)
 const HC_LOGO = 'https://res.cloudinary.com/dor8g1woi/image/upload/c_pad,w_900,h_500,b_white,f_auto,q_auto/rentato/logo';
 
-// Imágenes por palabra clave (loremflickr devuelve una foto real del término).
-// Usamos UN solo término claro por imagen (evita resultados ambiguos) y un lock
-// numérico para que la foto quede fija y no cambie en cada carga.
-let _hcLock = 20;
-const KW = (keyword) => `https://loremflickr.com/900/500/${keyword}?lock=${_hcLock++}`;
+// ===== Imágenes del carrusel =====
+// Solo imágenes VERIFICADAS de vehículos + slots de Cloudinary que tú llenas.
+// Para agregar fotos: súbelas a Cloudinary con Public ID exacto:
+//   rentato/land-1 ... rentato/land-10   (terrestres)
+//   rentato/water-1 ... rentato/water-10 (acuáticos)
+//   rentato/air-1 ... rentato/air-10     (aéreos)
+// Aparecen solas en el carrusel; los slots vacíos se ocultan automáticamente.
+const CLD = (id) => `https://res.cloudinary.com/dor8g1woi/image/upload/c_fill,w_900,h_500,q_auto,f_auto/rentato/${id}`;
+const SLOT = (cat, n) => Array.from({ length: n }, (_, i) => CLD(`${cat}-${i + 1}`));
 
-// 10 medios de transporte por categoría (según la lista oficial de RentaTÓ)
+// Verificadas (las mismas del catálogo en producción, confirmadas visualmente)
 const HC_LAND = [
-  'car', 'suv', 'pickup+truck', 'motorcycle', 'bus',
-  'scooter', 'atv', 'truck', 'van', 'bicycle'
-].map(KW);
+  'https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=900&h=500&fit=crop', // Toyota Corolla
+  'https://loremflickr.com/900/500/land,rover,defender,suv/all?lock=2',                // Land Rover Defender
+  'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=900&h=500&fit=crop',    // Tesla Model 3
+  'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=900&h=500&fit=crop',    // Yamaha MT-07
+  ...SLOT('land', 10)
+];
 
 const HC_WATER = [
-  'yacht', 'jetski', 'speedboat', 'boat', 'catamaran',
-  'sailboat', 'ferry', 'kayak', 'canoe', 'boat+sea'
-].map(KW);
+  'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=900&h=500&fit=crop', // Yamaha 242X
+  'https://loremflickr.com/900/500/jetski,seadoo,watercraft/all?lock=6',               // Sea-Doo
+  ...SLOT('water', 10)
+];
 
 const HC_AIR = [
-  'helicopter', 'airplane', 'jet', 'aircraft', 'drone',
-  'airplane+sky', 'aviation', 'plane', 'seaplane', 'helicopter+flight'
-].map(KW);
+  'https://loremflickr.com/900/500/helicopter,aircraft/all?lock=8',                    // Robinson R44
+  ...SLOT('air', 10)
+];
 
-function initHeroCarousel() {
+async function initHeroCarousel() {
   const track = $('hcTrack');
   const dotsWrap = $('hcDots');
   const catLabel = $('hcCat');
   if (!track) return;
 
-  // Construir la secuencia: logo → 10 terrestres → logo → 10 acuáticos → logo → 10 aéreos
+  // Precargar y quedarnos SOLO con las imágenes que existen (los slots de
+  // Cloudinary aún no subidos fallan y se descartan — nunca se ven huecos).
+  const preload = (url) => new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve(url);
+    im.onerror = () => resolve(null);
+    im.src = url;
+  });
+  const [land, water, air] = await Promise.all([
+    Promise.all(HC_LAND.map(preload)).then(a => a.filter(Boolean)),
+    Promise.all(HC_WATER.map(preload)).then(a => a.filter(Boolean)),
+    Promise.all(HC_AIR.map(preload)).then(a => a.filter(Boolean))
+  ]);
+
+  // Construir la secuencia: logo → terrestres → logo → acuáticos → logo → aéreos
   const seq = [];
   const push = (url, cat) => seq.push({ url, cat });
   push(HC_LOGO, '');
-  HC_LAND.forEach(u => push(u, 'Terrestre'));
+  land.forEach(u => push(u, 'Terrestre'));
   push(HC_LOGO, '');
-  HC_WATER.forEach(u => push(u, 'Acuático'));
+  water.forEach(u => push(u, 'Acuático'));
   push(HC_LOGO, '');
-  HC_AIR.forEach(u => push(u, 'Aéreo'));
+  air.forEach(u => push(u, 'Aéreo'));
 
   // Render slides (usamos <img> para poder detectar fallos de carga y
   // sustituir por el logo si una imagen no está disponible)
