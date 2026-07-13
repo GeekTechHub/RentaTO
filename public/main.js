@@ -483,6 +483,10 @@ window.openPublish = () => {
                     <option value="RENTER">Quiero rentar vehículos</option>
                     <option value="OWNER">Quiero publicar mis vehículos</option>
                 </select>
+                <label class="terms-accept" id="authTermsWrap" style="display:none;">
+                    <input type="checkbox" id="authTerms" />
+                    <span>He leído y acepto los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> de RentaTÓ.</span>
+                </label>
                 <button class="btn primary" id="authSubmit" onclick="handleAuth()">Acceder</button>
                 <div class="small text-center">Tus datos quedan protegidos. Solo los usamos para verificar identidad.</div>
             </div>
@@ -657,6 +661,8 @@ window.switchAuthMode = (mode) => {
   const tabRegister = $('tabRegister');
   if (nameField) nameField.style.display = isReg ? 'block' : 'none';
   if (roleField) roleField.style.display = isReg ? 'block' : 'none';
+  const termsWrap = $('authTermsWrap');
+  if (termsWrap) termsWrap.style.display = isReg ? 'flex' : 'none';
   if (submitBtn) submitBtn.textContent = isReg ? 'Crear Cuenta' : 'Acceder';
   if (tabLogin) tabLogin.className = isReg ? 'btn' : 'btn primary';
   if (tabRegister) tabRegister.className = isReg ? 'btn primary' : 'btn';
@@ -674,6 +680,8 @@ window.handleAuth = async () => {
     const role = $('authRole').value;
     if (!name) return showToast('Ingresa tu nombre.');
     if (pass.length < 8) return showToast('La contraseña debe tener al menos 8 caracteres.');
+    const terms = $('authTerms');
+    if (terms && !terms.checked) return showToast('Debes aceptar los Términos y Condiciones para crear tu cuenta.');
 
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
@@ -921,24 +929,25 @@ document.addEventListener('DOMContentLoaded', () => {
 const HC_LOGO = 'https://res.cloudinary.com/dor8g1woi/image/upload/c_pad,w_900,h_500,b_white,f_auto,q_auto/rentato/logo';
 
 // Imágenes por palabra clave (loremflickr devuelve una foto real del término).
-// El sufijo /all + lock numérico fija la imagen para que no cambie en cada carga.
-let _hcLock = 10;
-const KW = (keyword) => `https://loremflickr.com/900/500/${encodeURIComponent(keyword)}/all?lock=${_hcLock++}`;
+// Usamos UN solo término claro por imagen (evita resultados ambiguos) y un lock
+// numérico para que la foto quede fija y no cambie en cada carga.
+let _hcLock = 20;
+const KW = (keyword) => `https://loremflickr.com/900/500/${keyword}?lock=${_hcLock++}`;
 
 // 10 medios de transporte por categoría (según la lista oficial de RentaTÓ)
 const HC_LAND = [
-  'car', 'suv', 'pickup,truck', 'motorcycle', 'bus',
-  'electric,scooter', 'atv,quad', 'cargo,truck', 'van', 'bicycle'
+  'car', 'suv', 'pickup+truck', 'motorcycle', 'bus',
+  'scooter', 'atv', 'truck', 'van', 'bicycle'
 ].map(KW);
 
 const HC_WATER = [
-  'yacht', 'jetski', 'speedboat', 'fishing,boat', 'catamaran',
-  'sailboat', 'ferry', 'kayak', 'canoe', 'tourist,boat'
+  'yacht', 'jetski', 'speedboat', 'boat', 'catamaran',
+  'sailboat', 'ferry', 'kayak', 'canoe', 'boat+sea'
 ].map(KW);
 
 const HC_AIR = [
-  'helicopter', 'small,airplane', 'private,jet', 'charter,airplane', 'drone',
-  'light,aircraft', 'ultralight,aircraft', 'glider,aircraft', 'seaplane', 'helicopter,tour'
+  'helicopter', 'airplane', 'jet', 'aircraft', 'drone',
+  'airplane+sky', 'aviation', 'plane', 'seaplane', 'helicopter+flight'
 ].map(KW);
 
 function initHeroCarousel() {
